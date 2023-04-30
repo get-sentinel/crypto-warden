@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { Button, Card, IndexPath, Input, Layout, ModalPanel, Select, SelectItem, Text, TopNavigation, useTheme } from "@ui-kitten/components";
+import { Button, Card, Input, Text, useTheme } from "@ui-kitten/components";
 import React, { useEffect, useState } from "react";
 import { Dimensions, Image, ImageSourcePropType, ScrollView, StatusBar, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,7 +10,7 @@ import { updateWallet } from "../redux/WalletSlice";
 import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { getWalletsFromKeychain, setWalletsToKeychain } from "../storage/KeychainManager";
+import { fetchWallets, setWalletsToKeychain } from "../storage/KeychainManager";
 import Toast from "react-native-toast-message";
 import RNModal from 'react-native-modal';
 import StableSafeArea from "../components/safeArea/StableSafeArea";
@@ -31,7 +31,8 @@ const WalletDetails = React.memo(() => {
     const [walletSeedPhrase, setWalletSeedPhrase] = useState<string>('');
     const [walletPassword, setWalletPassword] = useState<string>('');
     const [walletProvider, setWalletProvider] = useState(0);
-    const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType | undefined>(undefined);
+    const [walletCreateDate, setWalletCreateDate] = useState(new Date());
+    const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType>(WALLET_PROVIDERS[0].imagePath);
     const [walletId, setWalletId] = useState(-1);
     const [secureEntryForPassword, setSecureEntryForPassword] = useState(true);
     const [secureEntryForSeed, setSecureEntryForSeed] = useState(true);
@@ -52,6 +53,7 @@ const WalletDetails = React.memo(() => {
         setWalletPassword(selectedWallet.password)
         setWalletProvider(selectedWallet.provider)
         setWalletId(selectedWallet.id)
+        setWalletCreateDate(selectedWallet.createDate)
 
         selectProviderImagePath(selectedWallet.provider)
     }, [])
@@ -85,8 +87,7 @@ const WalletDetails = React.memo(() => {
         selectProviderImagePath(provider ?? 0)
     }
 
-    const update = () => {
-
+    const update = (isDeleted: boolean = false) => {
         if (walletSeedPhrase === '' || walletName === '') {
             Toast.show({
                 type: 'success',
@@ -111,19 +112,17 @@ const WalletDetails = React.memo(() => {
             name: walletName,
             address: walletAddress,
             password: walletPassword,
-            id: walletId
+            id: walletId,
+            isDeleted: isDeleted,
+            createDate: walletCreateDate,
+            updateDate: new Date()
         })
 
-        dispatch(updateWallet({ updatedWallet: updatedWallet, premium: premium }))
+        dispatch(updateWallet({ updatedWallet: updatedWallet, synchronizable: premium }))
     }
 
     const deleteWallet = () => {
-        let index = wallets.map((wallet: Wallet) => wallet.id).indexOf(walletId);
-        let updatedWallets: Wallet[] = Object.assign([], wallets);
-        updatedWallets.splice(index, 1)
-
-        setWalletsToKeychain(updatedWallets, premium)
-        getWalletsFromKeychain(dispatch, premium)
+        update(true)
         navigation.goBack()
     }
 

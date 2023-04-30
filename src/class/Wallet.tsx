@@ -9,8 +9,12 @@ export default class Wallet {
     name: string;
     image: ImageSourcePropType;
     password: string | undefined;
+    isDeleted: boolean;
+    createDate: Date;
+    updateDate: Date;
 
-    constructor({ id, provider, seed, name, address, password }: { id: number, provider: number, seed: string, name: string, address: string | undefined, password: string | undefined }) {
+
+    constructor({ id, provider, seed, name, address, password, isDeleted, createDate, updateDate }: { id: number, provider: number, seed: string, name: string, address: string | undefined, password: string | undefined, isDeleted?: boolean, createDate?:Date, updateDate?:Date }) {
         this.address = address;
         this.seed = seed;
         this.provider = provider;
@@ -18,6 +22,9 @@ export default class Wallet {
         this.image = getProviderImagePath(provider);
         this.password = password;
         this.id = id
+        this.isDeleted = isDeleted ?? false
+        this.createDate = createDate ?? new Date()
+        this.updateDate = updateDate ?? new Date('1970-01-01')
     }
 
     getWallet = () => {
@@ -27,7 +34,10 @@ export default class Wallet {
             provider: this.provider,
             name: this.name,
             password: this.password,
-            id: this.id
+            id: this.id,
+            isDeleted: this.isDeleted,
+            createDate: this.createDate,
+            updateDate: this.updateDate
         }
     }
 }

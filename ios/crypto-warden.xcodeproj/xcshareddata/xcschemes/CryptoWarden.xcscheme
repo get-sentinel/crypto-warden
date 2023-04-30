@@ -57,9 +57,18 @@
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
             BuildableName = "Crypto Warden.app"
             BlueprintName = "CryptoWarden"
-            ReferencedContainer = "container:CryptoWarden.xcodeproj">
+            ReferencedContainer = "container:crypto-warden.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "Crypto Warden.app"
+            BlueprintName = "CryptoWarden"
+            ReferencedContainer = "container:CryptoWarden.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "OS_ACTIVITY_MODE"
@@ -84,6 +93,15 @@
             ReferencedContainer = "container:CryptoWarden.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "Crypto Warden.app"
+            BlueprintName = "CryptoWarden"
+            ReferencedContainer = "container:CryptoWarden.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

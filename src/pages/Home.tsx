@@ -21,7 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedWallet } from '../redux/WalletSlice';
 import { useNavigation } from '@react-navigation/native';
 import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_PADDING, PAGES, TOAST_POSITION, TOP_NAV_TITLE_SIZE, TOP_NAV_TITLE_WEIGHT } from '../utils/constants';
-import { getWalletsFromKeychain } from '../storage/KeychainManager';
+import { fetchWallets } from '../storage/KeychainManager';
 import { RefreshControl } from 'react-native-gesture-handler';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
 import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png'
@@ -107,7 +107,7 @@ const Home = () => {
     }, [sorting, wallets])
 
     useEffect(() => {
-        getWalletsFromKeychain(dispatch, premium)
+        fetchWallets({ dispatch: dispatch, synchronizable: premium })
     }, [premium])
 
 
@@ -128,7 +128,7 @@ const Home = () => {
 
     const refreshWallets = () => {
         setIsRefreshing(true)
-        getWalletsFromKeychain(dispatch, premium)
+        fetchWallets({ dispatch: dispatch, synchronizable: premium })
         setIsRefreshing(false)
     }
 
@@ -143,7 +143,7 @@ const Home = () => {
     }
 
     const syncData = () => {
-        getWalletsFromKeychain(dispatch, premium)
+        fetchWallets({ dispatch: dispatch, synchronizable: premium })
 
         if (!premium) {
             Toast.show({
@@ -223,7 +223,7 @@ const Home = () => {
                     {
                         sortedWallets.length > 0
                             ? <FlatList
-                                data={sortedWallets}
+                                data={sortedWallets.filter(wallet => !wallet.isDeleted)}
                                 refreshControl={
                                     <RefreshControl
                                         refreshing={isRefreshing}

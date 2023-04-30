@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { Button, Card, IndexPath, Input, Layout, ModalPanel, Select, SelectItem, Text, TopNavigation, useTheme } from "@ui-kitten/components";
+import { Button, Card, IndexPath, Input, Layout, Select, SelectItem, Text, TopNavigation, useTheme } from "@ui-kitten/components";
 import React, { useEffect, useState } from "react";
 import { Dimensions, Image, ImageSourcePropType, ScrollView, StatusBar, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,7 +27,7 @@ const AddWallet = React.memo(() => {
     const [walletSeedPhrase, setWalletSeedPhrase] = useState<string>('');
     const [walletPassword, setWalletPassword] = useState<string>('');
     const [walletProvider, setWalletProvider] = useState(0);
-    const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType | undefined>(WALLET_PROVIDERS[0].imagePath);
+    const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType>(WALLET_PROVIDERS[0].imagePath);
     const wallets = useSelector((state: any) => state.walletSlice.wallets);
     const premium = useSelector((state: any) => state.accountSlice.premium);
     const [walleteProviderSelectionModalVisible, setWalleteProviderSelectionModalVisible] = useState(false)
@@ -67,7 +67,10 @@ const AddWallet = React.memo(() => {
             name: walletName,
             address: walletAddress,
             password: walletPassword,
-            id: getMaxNumberFromArray(wallets.map((w: Wallet) => w.id))
+            id: getMaxNumberFromArray(wallets.map((w: Wallet) => w.id)),
+            isDeleted: false,
+            createDate: new Date(),
+            updateDate: new Date()
         })
 
         dispatch(addNewWallet({ newWallet: newWallet, synchronizable: premium }))
