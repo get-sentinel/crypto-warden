@@ -67,7 +67,7 @@ const Navigator = () => {
                     key={PAGES.PAYWALL}
                     name={PAGES.PAYWALL}
                     component={Paywall}
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, presentation: 'modal',  }}
                 />
             </Stack.Navigator>
             <Toast config={getToastConfig(theme)} />

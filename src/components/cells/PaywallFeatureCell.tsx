@@ -8,15 +8,15 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN } from '../../utils/constants';
 
-const PaywallFeatureCell = ({ headingIcon, featureTitle, featureDescription, iconBackgroundColor, iconColor = '#fff' }: { headingIcon: string, iconBackgroundColor: string, featureTitle: string, featureDescription: string, iconColor?: string}) => {
+const PaywallFeatureCell = ({ featureTitle, featureDescription }: { featureTitle: string, featureDescription: string, }) => {
 
     const theme = useTheme();
 
     return (
         <View style={styles().featureContainer}>
             <View style={styles().featureTextAndIcon}>
-                <View style={{ ...styles().iconContainer, ...{ backgroundColor: iconBackgroundColor } }}>
-                    <MaterialCommunityIcons name={headingIcon} size={20} color={iconColor} />
+                <View style={{ ...styles().iconContainer }}>
+                    <MaterialCommunityIcons name={'check-bold'} size={13} color={theme['button-text-color']} />
                 </View>
 
                 <View style={styles().textContainer}>
@@ -40,7 +40,7 @@ const styles = () => {
             alignItems: 'center',
             flexDirection: 'row',
             paddingHorizontal: DEFAULT_2x_MARGIN,
-            paddingVertical: DEFAULT_2x_MARGIN
+            paddingVertical: DEFAULT_1x_MARGIN
         },
         featureTextAndIcon: {
             display: 'flex',
@@ -49,12 +49,13 @@ const styles = () => {
         },
         iconContainer: {
             marginRight: 10,
-            borderRadius: 5,
-            padding: 4
+            borderRadius: 100,
+            padding: 4,
+            backgroundColor: 'rgb(84,182,133)'
         },
         featureTitle: {
-            fontWeight: '700',
-            fontSize: 16,
+            fontWeight: '600',
+            fontSize: 15,
             color: theme['text-basic-color']
         },
         featureDescription: {
@@ -66,7 +67,7 @@ const styles = () => {
             height: 20
         },
         textContainer: {
-            flex:1
+            flex: 1
         }
     })
 }

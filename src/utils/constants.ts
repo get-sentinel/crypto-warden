@@ -43,6 +43,7 @@ export const DEFAULT_05x_MARGIN = 4
 export const DEFAULT_1x_MARGIN = 8
 export const DEFAULT_2x_MARGIN = 16
 export const DEFAULT_3x_MARGIN = 24
+export const DEFAULT_15_MARGIN = 12
 export const DEFAULT_CORNER_RADIUS = 9
 export const TOP_NAV_TITLE_SIZE = 26
 export const TOP_NAV_TITLE_WEIGHT = '800'
