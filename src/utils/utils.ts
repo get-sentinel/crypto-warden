@@ -52,7 +52,7 @@ export const getNextSorting = (sorting: number) => {
 }
 
 export const sortWallets = (wallets: Wallet[], sorting: number) => {
-    let w: Wallet[] = Object.assign([], wallets);
+    let w: Wallet[] = Object.assign([], wallets.filter(wallet => !wallet.isDeleted));
     switch (sorting) {
         case 0: // Calendar ascending
         default:

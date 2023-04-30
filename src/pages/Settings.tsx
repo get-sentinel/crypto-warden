@@ -231,7 +231,7 @@ const Settings = () => {
                             <View style={{ marginRight: 10 }}>
                                 <Image source={AUTHENTICATOR_ICON} style={{ width: 26, height: 26, borderRadius: 5 }} />
                             </View>
-                            <Text style={styles().settingsText}>Download our Authenticator app</Text>
+                            <Text style={styles().settingsText}>Try our 2FA Authenticator app</Text>
                         </View>
                         <Icon name='diagonal-arrow-right-up-outline' fill={theme['text-basic-color']} style={styles().settingsItemIcon} />
                     </TouchableOpacity>

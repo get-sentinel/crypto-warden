@@ -150,7 +150,7 @@ const Home = () => {
                 type: 'success',
                 position: TOAST_POSITION,
                 text1: 'Upgrade required',
-                text2: 'Sync is available only to Premium users',
+                text2: 'Upgrade to Warden Plus to enable syncing',
                 visibilityTime: 2000,
                 autoHide: true,
                 topOffset: 30,
@@ -186,14 +186,6 @@ const Home = () => {
                                 <MaterialCommunityIcons name={'account-cog-outline'} size={27} color={theme['unselected-icon-color']} />
                             </TouchableOpacity>
 
-                            {!premium
-                                ? <TouchableOpacity
-                                    style={{ ...styles.actionButton, ...{ backgroundColor: 'rgb(238, 205, 95)' } }}
-                                    onPress={() => navigation.navigate(PAGES.PAYWALL)}>
-                                    <MaterialCommunityIcons name={'crown'} size={20} color={theme['fab-text-color']} />
-                                </TouchableOpacity>
-                                : undefined
-                            }
                         </View>
 
                         <View style={styles.toolbar}>
@@ -223,7 +215,7 @@ const Home = () => {
                     {
                         sortedWallets.length > 0
                             ? <FlatList
-                                data={sortedWallets.filter(wallet => !wallet.isDeleted)}
+                                data={sortedWallets}
                                 refreshControl={
                                     <RefreshControl
                                         refreshing={isRefreshing}
@@ -244,20 +236,47 @@ const Home = () => {
                                 keyExtractor={item => item.seed}
                                 ItemSeparatorComponent={() => <Divider style={{ backgroundColor: theme['color-basic-300'], width: '85%', alignSelf: 'flex-end' }} />}
                             />
-                            :
-                            <View style={{ display: 'flex', height: '100%', width: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                                <TouchableOpacity
-                                    style={{ borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], padding: 10, marginBottom: DEFAULT_3x_MARGIN }}
-                                    onPress={() => syncData()}>
-                                    <Text style={{ color: theme['text-primary-color-button'], fontWeight: '400', fontSize: 16 }}>
-                                        {'Press to sync data'}
-                                    </Text>
-                                </TouchableOpacity>
+                            : <View style={{ display: 'flex', flex: 1, width: '100%', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column' }}>
                                 <Image source={DEFAULT_IMAGE} style={{ width: '100%', maxHeight: '50%', overflow: 'visible' }} />
+                                <Button style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', width: '90%', backgroundColor: theme['background-color-button'], borderRadius: DEFAULT_CORNER_RADIUS, marginTop: 0, borderWidth: 0 }}
+                                    onPress={() => {
+                                        syncData()
+                                    }}>
+                                    {props => <Text {...props} style={{ width: '80%', color: theme['fab-text-color'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>{`Sync Wallets`}</Text>
+                                    }
+                                </Button>
 
                             </View>
                     }
                 </View>
+
+                {
+                    !premium && sortedWallets.length > 0
+                        ? <TouchableOpacity
+                            onPress={() => navigation.navigate(PAGES.PAYWALL)}
+                            style={{ width: '100%', marginTop: 10, marginBottom:50 }}>
+                            <View
+                                style={{
+                                    marginHorizontal: DEFAULT_PADDING,
+                                    borderWidth: 1,
+                                    borderColor: theme['transparency-basic-color'],
+                                    borderRadius: 10,
+                                    overflow: 'hidden',
+                                    height: 50,
+                                    backgroundColor: theme['color-basic-600'],
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    paddingHorizontal: DEFAULT_2x_MARGIN
+                                }}>
+                                <MaterialCommunityIcons
+                                    size={25} name='shield-alert' color={theme['color-primary-500']}
+                                />
+                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN }}>Without syncing you may lose your data if anything happens to this device. Click to enable. </Text>
+                            </View>
+                        </TouchableOpacity>
+                        : undefined
+                }
             </StableSafeArea>
 
         </>

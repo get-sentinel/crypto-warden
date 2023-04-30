@@ -39,10 +39,12 @@
   "filled-account-cell": "$color-basic-600",
   "unselected-icon-color": "rgb(150,150,150)",
   "selected-icon-color": "$color-primary-500",
-  "toast-text-color": "$icon-basic-color",
+  "toast-text-color": "$text-basic-color",
   "shadow-color": "rgba(0,0,0,0.15)",
   "tabbar-color": "$color-basic-500",
   "delete-button-background": "rgba(181, 12, 0, 1)",
   "delete-button-text": "rgba(181, 12, 0, 1)",
-  "secondary-text": "rgb(124, 134, 149)"
+  "secondary-text": "rgb(124, 134, 149)",
+  "toast-background-color": "rgb(208, 224, 242)",
+  "transparency-basic-color": "rgba(176, 179, 189, 0.2)"
 }
