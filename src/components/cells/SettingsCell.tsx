@@ -16,7 +16,7 @@ const SettingsCell = ({ headingIcon, trailingIcon, iconBackgroundColor, iconColo
             onPress={() => onPress()}>
             <View style={styles().settingsTextAndIcon}>
                 <View style={{ ...styles().iconContainer, ...{ backgroundColor: iconBackgroundColor } }}>
-                    <MaterialCommunityIcons name={headingIcon} size={20} color={iconColor} />
+                    <MaterialCommunityIcons name={headingIcon} size={16} color={iconColor} />
                 </View>
                 <Text style={styles().settingsText}>{text}</Text>
             </View>

@@ -19,6 +19,8 @@ import ATOMIC_IMAGE from '../assets/walletIcons/atomic.png'
 import XDEFI_IMAGE from '../assets/walletIcons/xdefi.png'
 import APP_ICON_IMAGE from '../assets/app-icon.png'
 
+export const APP_STORE_IOS_ID = "1663191731"
+
 export const c = 0
 export const DESKTOP = 'Desktop'
 

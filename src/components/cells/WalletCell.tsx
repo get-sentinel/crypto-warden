@@ -31,9 +31,6 @@ const walletCell = ({ item, shouldDisplayDivider = true, onPress }: { item: Wall
                     <Text style={{ ...styles.walletName, ...{ color: theme['text-basic-color'] } }}>{item.name}</Text>
                     {item.address ? <Text style={{ ...styles.walletAddress, ...{ color: theme['color-basic-400'] } }}>{cropWalletAddress(item.address!)}</Text> : undefined}
                 </View>
-                {
-                    shouldDisplayDivider ? <Divider style={{ backgroundColor: theme['color-basic-300'], width: '100%' }} /> : undefined
-                }
             </View>
 
         </TouchableOpacity>

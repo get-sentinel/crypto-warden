@@ -1,14 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { Button, Card, Divider, Icon, Text, TopNavigation, useTheme } from '@ui-kitten/components';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Image, View } from 'react-native';
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Image, View, ImageBackground } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useDispatch, useSelector } from 'react-redux';
 import PageTitle from '../components/PageTitle';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
-import { BUTTON_FONT_SIZE, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, DEFAULT_TEXT_SIZE, PAGES, TOAST_POSITION } from '../utils/constants';
+import { APP_STORE_IOS_ID, BUTTON_FONT_SIZE, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, DEFAULT_TEXT_SIZE, PAGES, TOAST_POSITION } from '../utils/constants';
 import { openURL } from '../utils/utils';
 import DeviceInfo from 'react-native-device-info';
 import AUTHENTICATOR_ICON from '../assets/authenticator.jpg'
@@ -19,6 +19,7 @@ import Toast from 'react-native-toast-message';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Rate from 'react-native-rate'
 import SettingsCell from '../components/cells/SettingsCell';
+import PREMIUM_BACKGROUND from '../assets/premium-background.png'
 
 const Settings = () => {
     const theme = useTheme();
@@ -38,13 +39,31 @@ const Settings = () => {
         navigation.goBack()
     }
 
+
     const rateApp = () => {
+        Toast.show({
+            type: 'success',
+            position: TOAST_POSITION,
+            text1: 'Reaching store ...',
+            text2: 'Wait a couple seconds as we load things ☺️',
+            visibilityTime: 2000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+            onShow: () => { },
+            onHide: () => { },
+            onPress: () => { },
+            props: { iconName: 'web' }
+        });
         const options = {
-            AppleAppID: "1663191731",
+            AppleAppID: APP_STORE_IOS_ID,
             preferInApp: true,
             openAppStoreIfInAppFails: true,
         }
-        Rate.rate(options, (success, errorMessage) => { })
+        Rate.rate(options, success => {
+            if (success) {
+            }
+        })
     }
 
     const purchasePremium = () => {
@@ -86,15 +105,37 @@ const Settings = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 50, paddingTop: 0, marginTop: 20 }}>
 
+                {
+                    !premium
+                        ? <TouchableOpacity
+                            onPress={() => purchasePremium()}
+                            style={styles().settingsBox}>
+                            <ImageBackground
+                                source={PREMIUM_BACKGROUND}
+                                imageStyle={{ borderRadius: DEFAULT_CORNER_RADIUS }}
+                                style={{ height: 55, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
+                            >
+                                <Text style={{ fontSize: 22, fontWeight: '700', color: 'rgb(34,52,45)' }}> Crypto Warden </Text>
+                                <View style={{ padding: 6, backgroundColor: '#fff', borderRadius: DEFAULT_CORNER_RADIUS }}>
+                                    <Text style={{ fontSize: 19, fontWeight: '800', color: 'rgb(34,52,45)' }}> Plus </Text>
+                                </View>
+                            </ImageBackground>
+                        </TouchableOpacity>
+                        : undefined
+                }
+
                 <View style={styles().settingsBox}>
 
-                    <SettingsCell
-                        headingIcon="crown"
-                        trailingIcon='arrow-ios-forward'
-                        text={premium ? 'Premium Enabled ✅' : 'Get Premium'}
-                        iconBackgroundColor='rgb(238, 205, 95)'
-                        onPress={() => purchasePremium()}
-                    />
+                    <TouchableOpacity style={styles().settingsItem}
+                        onPress={() => rateApp()}>
+                        <View style={styles().settingsTextAndIcon}>
+                            <View style={{...styles().iconBox, ...{backgroundColor:'rgb(249,222,82)'}}}>
+                                <MaterialCommunityIcons name="star" size={16} color={'#fff'} />
+                            </View>
+                            <Text style={styles().settingsText}>Love this app? Rate it 😊</Text>
+                        </View>
+                        <Icon name='diagonal-arrow-right-up-outline' fill={theme['text-basic-color']} style={styles().settingsItemIcon} />
+                    </TouchableOpacity>
 
                 </View>
 
@@ -106,7 +147,7 @@ const Settings = () => {
                             onPress={() => setSigninModalVisible(true)}>
                             <View style={styles().settingsTextAndIcon}>
                                 <View style={{ ...styles().iconContainer, ...{ backgroundColor: 'rgb(53,120,246)' } }}>
-                                    <MaterialIcons name="person" size={20} color={'#fff'} />
+                                    <MaterialIcons name="person" size={16} color={'#fff'} />
                                 </View>
                                 <Text style={styles().settingsText}>Sign In</Text>
                             </View>
@@ -141,31 +182,12 @@ const Settings = () => {
                         }}>
                         <View style={styles().settingsTextAndIcon}>
                             <View style={{ ...styles().iconContainer, ...{ backgroundColor: 'rgb(89,168,214)' } }}>
-                                <MaterialCommunityIcons name="badge-account" size={20} color={'#fff'} />
+                                <MaterialCommunityIcons name="badge-account" size={16} color={'#fff'} />
                             </View>
                             <Text style={styles().settingsText}>User ID</Text>
                         </View>
                         <Text ellipsizeMode='tail' numberOfLines={1}
                             style={{ width: '50%', textAlign: 'right', color: theme['text-basic-color'] }}>{uid ? uid : 'N/A'}</Text>
-                    </TouchableOpacity>
-
-                    <Divider style={styles().divider} />
-
-                    <TouchableOpacity style={styles().settingsItem}
-                        onPress={() => rateApp()}>
-                        <View style={styles().settingsTextAndIcon}>
-                            <View style={{ ...styles().iconContainer, ...{ backgroundColor: 'rgb(101,195,102)' } }}>
-                                <MaterialCommunityIcons name="message-text" size={20} color={'#fff'} />
-                            </View>
-                            <Text style={styles().settingsText}>Rate App</Text>
-                        </View>
-                        <View style={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
-                            <Icon name='star' fill='orange' style={{ width: 18, height: 18, marginLeft: 0 }} />
-                            <Icon name='star' fill='orange' style={{ width: 18, height: 18, marginLeft: 0 }} />
-                            <Icon name='star' fill='orange' style={{ width: 18, height: 18, marginLeft: 0 }} />
-                            <Icon name='star' fill='orange' style={{ width: 18, height: 18, marginLeft: 0 }} />
-                            <Icon name='star' fill='orange' style={{ width: 18, height: 18, marginLeft: 0 }} />
-                        </View>
                     </TouchableOpacity>
 
                 </View>
@@ -207,7 +229,7 @@ const Settings = () => {
                         onPress={() => openURL('https://apps.apple.com/it/app/sentinel-authenticator-2fa/id1189922806')}>
                         <View style={styles().settingsTextAndIcon}>
                             <View style={{ marginRight: 10 }}>
-                                <Image source={AUTHENTICATOR_ICON} style={{ width: 30, height: 30, borderRadius: 5 }} />
+                                <Image source={AUTHENTICATOR_ICON} style={{ width: 26, height: 26, borderRadius: 5 }} />
                             </View>
                             <Text style={styles().settingsText}>Download our Authenticator app</Text>
                         </View>
@@ -263,7 +285,7 @@ const Settings = () => {
                     <View style={styles().settingsItem}>
                         <View style={styles().settingsTextAndIcon}>
                             <View style={{ ...styles().iconContainer, ...{ backgroundColor: 'rgb(0,0,0)' } }}>
-                                <MaterialIcons name="code" size={20} color={'#fff'} />
+                                <MaterialIcons name="code" size={16} color={'#fff'} />
                             </View>
                             <Text style={styles().settingsText}>Version</Text>
                         </View>
@@ -328,7 +350,7 @@ const Settings = () => {
                         }}>
                         <View style={styles().settingsTextAndIcon}>
                             <View style={{ ...styles().iconContainer, ...{ backgroundColor: 'rgb(235,78,61)' } }}>
-                                <MaterialCommunityIcons name="account-remove" size={20} color={'#fff'} />
+                                <MaterialCommunityIcons name="account-remove" size={16} color={'#fff'} />
                             </View>
                             <Text style={styles().settingsText}>Delete Account</Text>
                         </View>
@@ -463,8 +485,8 @@ const styles = () => {
             paddingHorizontal: 0,
             marginBottom: 30,
             marginHorizontal: 20,
-            borderWidth: 1,
-            borderColor: theme['color-basic-300']
+            // borderWidth: 1,
+            // borderColor: theme['transparency-basic-color']
         },
         settingsItem: {
             display: 'flex',
@@ -511,6 +533,11 @@ const styles = () => {
             textAlign: 'left',
             fontSize: DEFAULT_TEXT_SIZE,
             fontWeight: '400'
+        },
+        iconBox: {
+            marginRight: 10,
+            borderRadius: 6,
+            padding: 5
         }
     })
 }

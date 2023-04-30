@@ -15,7 +15,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Wallet from '../class/Wallet';
 import { getNextSorting, sortWallets } from '../utils/utils';
-import { Button, useTheme } from '@ui-kitten/components';
+import { Button, Divider, useTheme } from '@ui-kitten/components';
 import WalletCell from '../components/cells/WalletCell';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedWallet } from '../redux/WalletSlice';
@@ -242,6 +242,7 @@ const Home = () => {
                                 style={{ marginTop: DEFAULT_3x_MARGIN }}
                                 renderItem={renderItem}
                                 keyExtractor={item => item.seed}
+                                ItemSeparatorComponent={() => <Divider style={{ backgroundColor: theme['color-basic-300'], width: '85%', alignSelf: 'flex-end' }} />}
                             />
                             :
                             <View style={{ display: 'flex', height: '100%', width: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
