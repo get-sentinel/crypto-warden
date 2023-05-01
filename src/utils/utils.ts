@@ -116,7 +116,7 @@ export const addNewWalletFromURL = (dispatch: Dispatch<any>, url: string, wallet
     }
 
     // Get the wallet name by splitting the remaining string by "?" and taking the first part
-    const walletName = parts[1].split('?')[0] ?? "My Wallet";
+    const walletName = parts[1].split('?')[0].replace("%20", " ") ?? "My Wallet";
 
     // Get the query string by splitting the remaining string by "?"
     const queryString = parts[1].split('?')[1];
