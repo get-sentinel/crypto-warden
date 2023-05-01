@@ -8,13 +8,15 @@ import {
     View,
     Image,
     TouchableOpacity,
+    NativeEventEmitter,
+    NativeModules,
 } from 'react-native';
 import {
     Colors,
 } from 'react-native/Libraries/NewAppScreen';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Wallet from '../class/Wallet';
-import { getNextSorting, sortWallets } from '../utils/utils';
+import { addNewWalletFromURL, getNextSorting, sortWallets } from '../utils/utils';
 import { Button, Divider, useTheme } from '@ui-kitten/components';
 import WalletCell from '../components/cells/WalletCell';
 import { useDispatch, useSelector } from 'react-redux';
@@ -46,6 +48,7 @@ const Home = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [sorting, setSorting] = useState(0);
     const [sortingImage, setSortingImage] = useState('sort-calendar-ascending')
+    let emitter = new NativeEventEmitter(NativeModules.EventEmitter)
 
     useEffect(() => {
         const connectRevenueCat = async () => {
@@ -78,10 +81,15 @@ const Home = () => {
             });
         }
 
+        let urlListener = emitter.addListener('url', (url: string) => {
+            addNewWalletFromURL(dispatch, url, wallets, premium)
+        });
+
         const unsubscribe = subscribeFirebase()
 
         return () => {
             unsubscribe()
+            urlListener.remove()
         };
 
     }, [])
@@ -257,7 +265,7 @@ const Home = () => {
                                     onPress={() => {
                                         syncData()
                                     }}>
-                                    {props => <Text {...props} style={{ width: '80%', color: theme['fab-text-color'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE-4 }}>{`Sync Wallets`}</Text>
+                                    {props => <Text {...props} style={{ width: '80%', color: theme['fab-text-color'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 4 }}>{`Sync Wallets`}</Text>
                                     }
                                 </Button>
 
@@ -269,7 +277,7 @@ const Home = () => {
                     !premium && sortedWallets.length > 0
                         ? <TouchableOpacity
                             onPress={() => navigation.navigate(PAGES.PAYWALL)}
-                            style={{ width: '100%', marginTop: 10, marginBottom:50 }}>
+                            style={{ width: '100%', marginTop: 10, marginBottom: 50 }}>
                             <View
                                 style={{
                                     marginHorizontal: DEFAULT_PADDING,

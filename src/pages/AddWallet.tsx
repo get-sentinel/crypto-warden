@@ -39,6 +39,7 @@ const AddWallet = React.memo(() => {
         let wp = WALLET_PROVIDERS.filter(w => w.id === provider)
         setWalletProviderImagePath(wp.length > 0 ? wp[0].imagePath : WALLET_PROVIDERS[0].imagePath)
     }
+    
     const selectProvider = (provider: number | undefined) => {
         setWalletProvider(provider ?? 0)
         selectProviderImagePath(provider ?? 0)

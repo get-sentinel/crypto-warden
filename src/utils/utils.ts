@@ -1,6 +1,9 @@
 import { Dimensions, Linking } from 'react-native';
 import Wallet from '../class/Wallet';
-import { WALLET_PROVIDERS } from './constants';
+import { TOAST_POSITION, WALLET_PROVIDERS } from './constants';
+import { Dispatch } from 'react';
+import { addNewWallet } from '../redux/WalletSlice';
+import Toast from 'react-native-toast-message';
 
 export const cropWalletAddress = (address: string) => {
     let length = address.length
@@ -60,13 +63,13 @@ export const sortWallets = (wallets: Wallet[], sorting: number) => {
         case 1: // Calendar descending
             return w.reverse();
         case 2: // Alphabetical ascending
-            return w.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+            return w.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
         case 3: // Alphabetical descending
-            return w.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0)).reverse()
+            return w.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0)).reverse()
     }
 }
 
-export const analyzeSeed = (nextValue: string, setStatus: (status:number) => void) => {
+export const analyzeSeed = (nextValue: string, setStatus: (status: number) => void) => {
 
     // Check that the string is not empty
     if (nextValue === '') {
@@ -95,4 +98,77 @@ export const analyzeSeed = (nextValue: string, setStatus: (status:number) => voi
     }
 
     setStatus(4)
+}
+
+export const findProviderIdByName = (name: string) => {
+    const walletProvider = WALLET_PROVIDERS.find(
+        provider => provider.name.toLowerCase() === name.toLowerCase()
+    );
+    return walletProvider ? walletProvider.id : 0;
+}
+
+export const addNewWalletFromURL = (dispatch: Dispatch<any>, url: string, wallets: Wallet[], synchronizable: boolean) => {
+    // Split the URL by "//" to get the wallet name and remaining string
+    const parts = url.split('//');
+
+    if (parts.length !== 2) {
+        console.error('Invalid URL format');
+    }
+
+    // Get the wallet name by splitting the remaining string by "?" and taking the first part
+    const walletName = parts[1].split('?')[0] ?? "My Wallet";
+
+    // Get the query string by splitting the remaining string by "?"
+    const queryString = parts[1].split('?')[1];
+
+    // Parse the query string into an object with key-value pairs
+    const query: { [key: string]: string } = {};
+    queryString.split('&').forEach((item) => {
+        const [key, value] = item.split('=');
+        query[key] = decodeURIComponent(value);
+    });
+
+    // Get the seed (mandatory field)
+    const seed = query.seed;
+
+    if (!seed) {
+        Toast.show({
+            type: 'success',
+            position: TOAST_POSITION,
+            text1: 'Could not import wallet',
+            text2: 'The seed is either missing or malformed',
+            visibilityTime: 2000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+            onShow: () => { },
+            onHide: () => { },
+            onPress: () => { },
+            props: { iconName: 'cancel' }
+        })
+        return
+    }
+
+    // Get the provider (optional field)
+    const provider = query.provider;
+
+    // Get the address (optional field)
+    const address = query.address;
+
+    // Get the password (optional field)
+    const password = query.password;
+
+    let newWallet = new Wallet({
+        provider: provider ? findProviderIdByName(provider) : 0,
+        seed: seed,
+        name: walletName,
+        address: address,
+        password: password,
+        id: getMaxNumberFromArray(wallets.map((w: Wallet) => w.id)),
+        isDeleted: false,
+        createDate: new Date(),
+        updateDate: new Date()
+    })
+
+    dispatch(addNewWallet({ newWallet: newWallet, synchronizable: synchronizable }))
 }

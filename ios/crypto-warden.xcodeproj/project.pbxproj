@@ -21,6 +21,8 @@
 		925F42F7296573CD0068854A /* KeychainWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925F42F6296573CD0068854A /* KeychainWrapper.swift */; };
 		925F42F92965741E0068854A /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925F42F82965741E0068854A /* Constants.swift */; };
 		925F42FB2965751A0068854A /* KeychainWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 925F42FA2965751A0068854A /* KeychainWrapper.m */; };
+		92CCF64529FFFAAC005A5CA3 /* EventEmitter.m in Sources */ = {isa = PBXBuildFile; fileRef = 92CCF64329FFFAAC005A5CA3 /* EventEmitter.m */; };
+		92CCF64629FFFAAC005A5CA3 /* EventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92CCF64429FFFAAC005A5CA3 /* EventEmitter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +56,8 @@
 		925F42F82965741E0068854A /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		925F42FA2965751A0068854A /* KeychainWrapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KeychainWrapper.m; sourceTree = "<group>"; };
 		926C02C129633BD6002C2597 /* CryptoWarden.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = CryptoWarden.entitlements; path = "crypto-warden/CryptoWarden.entitlements"; sourceTree = "<group>"; };
+		92CCF64329FFFAAC005A5CA3 /* EventEmitter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventEmitter.m; sourceTree = "<group>"; };
+		92CCF64429FFFAAC005A5CA3 /* EventEmitter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EventEmitter.swift; sourceTree = "<group>"; };
 		92DB7C2028D776C5004D102E /* Fontisto.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Fontisto.ttf; sourceTree = "<group>"; };
 		92DB7C2128D776C5004D102E /* Octicons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Octicons.ttf; sourceTree = "<group>"; };
 		92DB7C2228D776C5004D102E /* Feather.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Feather.ttf; sourceTree = "<group>"; };
@@ -119,6 +123,7 @@
 		13B07FAE1A68108700A75B9A /* CryptoWarden */ = {
 			isa = PBXGroup;
 			children = (
+				92CCF64229FFFA97005A5CA3 /* EventEmitter */,
 				9217C94129FE9FDB00F8710D /* CryptoWarden.entitlements */,
 				925F42F5296573B70068854A /* Keychain */,
 				926C02C129633BD6002C2597 /* CryptoWarden.entitlements */,
@@ -184,6 +189,15 @@
 				925F42FA2965751A0068854A /* KeychainWrapper.m */,
 			);
 			path = Keychain;
+			sourceTree = "<group>";
+		};
+		92CCF64229FFFA97005A5CA3 /* EventEmitter */ = {
+			isa = PBXGroup;
+			children = (
+				92CCF64329FFFAAC005A5CA3 /* EventEmitter.m */,
+				92CCF64429FFFAAC005A5CA3 /* EventEmitter.swift */,
+			);
+			path = EventEmitter;
 			sourceTree = "<group>";
 		};
 		92DB7C1F28D776C5004D102E /* Fonts */ = {
@@ -473,11 +487,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				925F42F92965741E0068854A /* Constants.swift in Sources */,
+				92CCF64629FFFAAC005A5CA3 /* EventEmitter.swift in Sources */,
 				925F42FB2965751A0068854A /* KeychainWrapper.m in Sources */,
 				92083B07296AE97000D9C7BC /* AppDelegate.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.jsbundle in Sources */,
 				925F42F7296573CD0068854A /* KeychainWrapper.swift in Sources */,
 				92083B09296AEBE800D9C7BC /* SceneDelegate.swift in Sources */,
+				92CCF64529FFFAAC005A5CA3 /* EventEmitter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
