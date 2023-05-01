@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import ModalContainer from "../components/ModalContainer";
 import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_PADDING } from "../utils/constants";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { openURL } from "../utils/utils";
+import { isSmallScreen, openURL } from "../utils/utils";
 import Purchases from "react-native-purchases";
 import { getLifetimeIAPDetails, purchaseIAP } from "../iap/PurchaseIAP";
 import PaywallCell from "../components/cells/PaywallCell";
@@ -71,168 +71,147 @@ const Paywall = React.memo(() => {
     return (
 
 
-        <StableSafeArea>
+        <View
+            style={{
+                backgroundColor: theme['color-basic-500'],
+                borderColor: 'transparent',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                height: '100%',
+                paddingBottom: isSmallScreen() ? 15 : 50,
+                paddingTop: 15,
+                paddingHorizontal: DEFAULT_3x_MARGIN,
+            }}
+        >
 
-            <TopNavigation
-                style={{
-                    backgroundColor: theme['color-basic-500'],
-                    paddingLeft: DEFAULT_PADDING,
-                    paddingRight: DEFAULT_PADDING
-                }}
-                title={renderTitle}
-            />
+            {
+                isProcessingPurchase
+                    ? <View style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: 120,
+                        height: 120,
+                        borderRadius: 10,
+                        zIndex: 10,
+                        backgroundColor: theme['color-basic-500'],
+                        position: 'absolute',
+                        alignSelf: 'center',
+                        bottom: Dimensions.get("window").height / 2
+                    }}>
+                        <Text style={{ marginBottom: 15 }}> Processing ... </Text>
+                        <Spinner size='giant' style={{ alignSelf: 'center', borderColor: theme['color-primary-500'] }} />
+                    </View>
+                    : undefined
+            }
+
+            <View style={{ height: 55, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: DEFAULT_2x_MARGIN }}>
+                <Text style={{ fontSize: 32, fontWeight: '700', color: theme['text-basic-color'] }}> Crypto Warden </Text>
+                <View style={{ padding: 4, backgroundColor: 'rgb(249,222,82)', borderRadius: DEFAULT_CORNER_RADIUS }}>
+                    <Text style={{ fontSize: 28, fontWeight: '800', color: 'rgb(34,52,45)' }}> Plus </Text>
+                </View>
+            </View>
 
             <View
                 style={{
-                    backgroundColor: theme['color-basic-500'],
-                    borderColor: 'transparent',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                    paddingBottom: 100,
-                    paddingHorizontal: DEFAULT_3x_MARGIN,
-                }}
-            >
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingBottom: 0
+                }}>
 
-                {
-                    isProcessingPurchase
-                        ? <View style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            width: 120,
-                            height: 120,
-                            borderRadius: 10,
-                            zIndex: 10,
-                            backgroundColor: theme['color-basic-500'],
-                            position: 'absolute',
-                            alignSelf: 'center',
-                            bottom: Dimensions.get("window").height / 2
-                        }}>
-                            <Text style={{ marginBottom: 15 }}> Processing ... </Text>
-                            <Spinner size='giant' style={{ alignSelf: 'center', borderColor: theme['color-primary-500'] }} />
-                        </View>
-                        : undefined
-                }
+                <PaywallFeatureCell
+                    featureTitle="Unlimited Wallets"
+                    featureDescription="Add as many wallets as you want. No limits."
+                />
 
-                {/* <ImageBackground source={PREMIUM} resizeMode="contain" style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                }}> */}
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingBottom: 50
-                    }}>
-                    <Image source={PREMIUM} style={{ width: '100%', height: 200 }} />
+                <Divider style={styles().divider} />
 
-                    <Text style={{
-                        color: theme['text-basic-color'], fontSize: 32, fontWeight: '700', marginBottom: DEFAULT_2x_MARGIN, textAlign: 'center', marginTop: DEFAULT_1x_MARGIN
-                    }}>
-                        {"Get Premium"}
-                    </Text>
+                <PaywallFeatureCell
+                    featureTitle="Device Sync"
+                    featureDescription="Sync automatically on all your devices via iCloud Keychain."
+                />
 
-                    <Text style={{
-                        color: theme['text-basic-color'], fontSize: 14, marginBottom: DEFAULT_3x_MARGIN, textAlign: 'center'
-                    }}>
-                        {"Get full protection, exclusive features and support us by upgrading to Crypto Warden Premium"}
-                    </Text>
+                <Divider style={styles().divider} />
 
 
-                    <View style={{ justifyContent: 'space-between', paddingHorizontal: DEFAULT_1x_MARGIN, width: '100%', backgroundColor: theme['color-basic-600'], borderRadius: DEFAULT_CORNER_RADIUS, borderWidth: 1, borderColor: theme['color-basic-300'] }}>
+                <PaywallFeatureCell
+                    featureTitle="Privacy Friendly"
+                    featureDescription="We cannot access any of your data by design."
+                />
 
-                        <PaywallCell
-                            paywallOption="One-Time"
-                            paywallOptionPrice="$5,99"
-                            selected={true}
-                            onPress={() => console.log()}
-                        />
+                <Divider style={styles().divider} />
 
-                    </View>
+                <PaywallFeatureCell
+                    featureTitle="Support our work"
+                    featureDescription="This purchase will support us and help us grow. Thank you for that."
+                />
 
-                    <View style={{ justifyContent: 'space-between', width: '100%', backgroundColor: theme['color-basic-600'], borderRadius: DEFAULT_CORNER_RADIUS, marginTop: DEFAULT_3x_MARGIN, borderWidth: 1, borderColor: theme['color-basic-300'] }}>
+                <Divider style={styles().divider} />
 
-                        <PaywallFeatureCell
-                            headingIcon="wallet"
-                            featureTitle="Unlimited Wallets"
-                            featureDescription="Add all your non-custodial wallets"
-                            iconBackgroundColor={'rgb(72, 66, 245)'}
-                        />
-
-                        <Divider style={styles().divider} />
-
-                        <PaywallFeatureCell
-                            headingIcon="cellphone-link"
-                            featureTitle="iCloud Keychain Sharing"
-                            featureDescription="Secure sharing across all your devices"
-                            iconBackgroundColor={'rgb(93, 66, 245)'}
-                        />
-
-                        <Divider style={styles().divider} />
-
-                        <PaywallFeatureCell
-                            headingIcon="account"
-                            featureTitle="Support us"
-                            featureDescription="Support the Open Source project"
-                            iconBackgroundColor={'rgb(117, 66, 245)'}
-                        />
-
-                        <Divider style={styles().divider} />
-
-                        <PaywallFeatureCell
-                            headingIcon="application-brackets-outline"
-                            featureTitle="All upcoming new features"
-                            featureDescription="Enjoy all upcoming new features"
-                            iconBackgroundColor={'rgb(150, 66, 245)'}
-                        />
-
-                    </View>
-
-                    <View style={{ flexDirection: 'row', flex: 1, flexWrap: 'wrap', marginTop: DEFAULT_2x_MARGIN }}>
-                        <Text style={{ color: theme['secondary-text'] }}>
-                            {'By purchasing you agree to the '}
-                            <Text style={{ color: theme['color-primary-500'] }}
-                                onPress={() => openURL('https://getsentinel.io/terms-of-service?ref=app')}>
-                                Terms of Service
-                            </Text>
-                            {' and '}
-                            <Text style={{ color: theme['color-primary-500'] }}
-                                onPress={() => openURL('https://getsentinel.io/privacy-policy?ref=app')}>
-                                Privacy Policy
-                            </Text>
-                            {'.'}
-                        </Text>
-                    </View>
-
-                </ScrollView>
-
-
-                <Button
-                    style={{ width: '100%', marginBottom: 0, marginTop: 20, backgroundColor: theme['background-color-button'], borderWidth: 0, borderRadius: DEFAULT_CORNER_RADIUS }}
-                    onPress={() => purchase()}>
-                    {props => <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '100%', paddingHorizontal: 10, paddingVertical: 0 }}>
-                        <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
-                            {`Get Premium for`}
-                        </Text>
-                        <Text {...props} style={{
-                            color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0, textDecorationLine: discountedLifetimePrice ? 'line-through' : undefined,
-                            textDecorationStyle: 'solid',
-                        }}>
-                            {` ${lifetimePrice} `}
-                        </Text>
-                        {discountedLifetimePrice
-                            ? <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
-                                {` only ${discountedLifetimePrice}`}
-                            </Text>
-                            : undefined
-                        }
-                    </View>
-                    }
-                </Button>
+                <PaywallFeatureCell
+                    featureTitle="All upcoming new features"
+                    featureDescription="Enjoy all new features that will be released along our journey."
+                />
 
             </View>
-        </StableSafeArea>
+
+            <View style={{
+                justifyContent: 'space-between',
+                paddingHorizontal: DEFAULT_1x_MARGIN,
+                marginTop: DEFAULT_3x_MARGIN,
+                width: '100%',
+                backgroundColor: theme['color-basic-600'],
+                borderRadius: DEFAULT_CORNER_RADIUS,
+            }}>
+
+                <PaywallCell
+                    paywallOption="One-Time"
+                    paywallOptionDescription="Pay once, enjoy forever."
+                    paywallOptionPrice={`${lifetimePrice === '' ? '$ 5.99' : lifetimePrice}`}
+                    selected={true}
+                    onPress={() => console.log()}
+                />
+
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: DEFAULT_1x_MARGIN }}>
+                <Text style={{ color: theme['secondary-text'], fontSize: 12 }}>
+                    {'By purchasing you agree to the '}
+                    <Text style={{ color: theme['color-primary-500'], fontSize: 12 }}
+                        onPress={() => openURL('https://getsentinel.io/terms-of-service?ref=app')}>
+                        Terms of Service
+                    </Text>
+                    {' and '}
+                    <Text style={{ color: theme['color-primary-500'], fontSize: 12 }}
+                        onPress={() => openURL('https://getsentinel.io/privacy-policy?ref=app')}>
+                        Privacy Policy
+                    </Text>
+                    {'.'}
+                </Text>
+            </View>
+
+            <Button
+                style={{ width: '100%', marginBottom: 0, marginTop: DEFAULT_1x_MARGIN, backgroundColor: theme['background-color-button'], borderWidth: 0, borderRadius: DEFAULT_CORNER_RADIUS, height: 50 }}
+                onPress={() => purchase()}>
+                {props => <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '100%', paddingHorizontal: 10, paddingVertical: 0 }}>
+                    <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
+                        {`Upgrade for just`}
+                    </Text>
+                    <Text {...props} style={{
+                        color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0, textDecorationLine: discountedLifetimePrice ? 'line-through' : undefined,
+                        textDecorationStyle: 'solid',
+                    }}>
+                        {` ${lifetimePrice} `}
+                    </Text>
+                    {discountedLifetimePrice
+                        ? <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
+                            {` ${discountedLifetimePrice}`}
+                        </Text>
+                        : undefined
+                    }
+                </View>
+                }
+            </Button >
+
+        </View >
     );
 });
 

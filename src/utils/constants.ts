@@ -19,6 +19,8 @@ import ATOMIC_IMAGE from '../assets/walletIcons/atomic.png'
 import XDEFI_IMAGE from '../assets/walletIcons/xdefi.png'
 import APP_ICON_IMAGE from '../assets/app-icon.png'
 
+export const APP_STORE_IOS_ID = "1663191731"
+
 export const c = 0
 export const DESKTOP = 'Desktop'
 
@@ -41,8 +43,9 @@ export const DEFAULT_05x_MARGIN = 4
 export const DEFAULT_1x_MARGIN = 8
 export const DEFAULT_2x_MARGIN = 16
 export const DEFAULT_3x_MARGIN = 24
+export const DEFAULT_15_MARGIN = 12
 export const DEFAULT_CORNER_RADIUS = 9
-export const TOP_NAV_TITLE_SIZE = 26
+export const TOP_NAV_TITLE_SIZE = 27
 export const TOP_NAV_TITLE_WEIGHT = '800'
 export const HANDSET = 'Handset'
 export const BUTTON_FONT_SIZE = 18
@@ -154,3 +157,32 @@ export const WALLET_PROVIDERS = [
 ]
 
 
+interface SeedStatusMessage {
+    [key: number]: {
+        message: string;
+        color: string;
+    };
+}
+
+export const SEED_STATUS_MESSAGE: SeedStatusMessage = {
+    0: {
+        message: 'No seed has been provided yet',
+        color: 'rgb(212, 182, 74)'
+    },
+    1: {
+        message: 'Seed should be composed of 12 words',
+        color: 'rgb(222, 77, 67)'
+    },
+    2: {
+        message: 'Seed starts or ends with a space',
+        color: 'rgb(222, 77, 67)'
+    },
+    3: {
+        message: 'Seed contains special characters',
+        color: 'rgb(222, 77, 67)'
+    },
+    4: {
+        message: 'Seed looks fine 😉',
+        color: 'rgb(94, 179, 79)'
+    }
+}

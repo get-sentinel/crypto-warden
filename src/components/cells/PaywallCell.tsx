@@ -6,9 +6,9 @@ import {
     TouchableOpacity, View,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_CORNER_RADIUS } from '../../utils/constants';
+import { DEFAULT_05x_MARGIN, DEFAULT_15_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_CORNER_RADIUS } from '../../utils/constants';
 
-const PaywallCell = ({ paywallOptionPrice, paywallOption, selected, discount, onPress }: { paywallOptionPrice: string, paywallOption: string, selected: boolean, discount?: string, onPress: () => void }) => {
+const PaywallCell = ({ paywallOptionPrice, paywallOption, paywallOptionDescription, selected, discount, onPress }: { paywallOptionPrice: string, paywallOption: string, paywallOptionDescription: string, selected: boolean, discount?: string, onPress: () => void }) => {
 
     const theme = useTheme();
 
@@ -17,27 +17,29 @@ const PaywallCell = ({ paywallOptionPrice, paywallOption, selected, discount, on
 
             <View style={styles().cellHeader}>
                 <MaterialCommunityIcons
-                    name={selected ? 'check-circle' : 'circle-outline'}
+                    name={selected ? 'circle' : 'circle-outline'}
                     size={24}
                     color={selected ? theme['color-primary-500'] : theme['icon-inactive-color']} />
 
-                <Text style={styles().optionText}>
-                    {paywallOption}
-                </Text>
-                {
-                    discount
-                        ? <View style={styles().discountCell}>
-                            <Text style={styles().discountText}>
-                                {discount}
-                            </Text>
-                        </View>
-                        : undefined
-                }
-            </View>
+                <View style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+                    <Text style={styles().optionText}>
+                        {paywallOption + ': ' + paywallOptionPrice}
+                    </Text>
+                    <Text style={styles().optionDescriptionText}>
+                        {paywallOptionDescription}
+                    </Text>
+                </View>
 
-            <Text style={styles().optionPriceText}>
-                {paywallOptionPrice}
-            </Text>
+            </View>
+            {
+                discount
+                    ? <View style={styles().discountCell}>
+                        <Text style={styles().discountText}>
+                            {discount}
+                        </Text>
+                    </View>
+                    : undefined
+            }
 
         </TouchableOpacity>
 
@@ -59,13 +61,20 @@ const styles = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             flexDirection: 'row',
-            paddingVertical: DEFAULT_2x_MARGIN
+            paddingVertical: DEFAULT_15_MARGIN
         },
         optionText: {
             color: theme['text-basic-color'],
-            fontSize: 16,
+            fontSize: 15,
             textAlign: 'center',
             fontWeight: '600',
+            marginLeft: DEFAULT_2x_MARGIN
+        },
+        optionDescriptionText: {
+            color: theme['secondary-text'],
+            fontSize: 13,
+            textAlign: 'center',
+            fontWeight: '400',
             marginLeft: DEFAULT_2x_MARGIN
         },
         optionPriceText: {
@@ -78,11 +87,11 @@ const styles = () => {
             padding: DEFAULT_05x_MARGIN,
             backgroundColor: theme['color-primary-500'],
             borderRadius: 5,
-            marginLeft:10
+            marginLeft: 10
         },
         discountText: {
-            color: theme['text-primary-color-button'],
-            fontSize: 14,
+            color: theme['button-text-color'],
+            fontSize: 12,
             fontWeight: '600'
         }
     })

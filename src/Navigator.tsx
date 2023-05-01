@@ -26,10 +26,11 @@ import OnboardingCarousel from './pages/OnboardingCarousel';
 import Paywall from './pages/Paywall';
 import Toast from 'react-native-toast-message';
 import { getToastConfig } from './config/ToastConfig';
+import { createStackNavigator } from '@react-navigation/stack';
 
 const Navigator = () => {
 
-    const Stack = createNativeStackNavigator();
+    const Stack = createStackNavigator();
     const theme = useTheme()
 
     return (
@@ -43,19 +44,19 @@ const Navigator = () => {
                     key={PAGES.ADD}
                     name={PAGES.ADD}
                     component={Add}
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, presentation: 'modal' }}
                 />
                 <Stack.Screen
                     key={PAGES.SETTINGS}
                     name={PAGES.SETTINGS}
                     component={Settings}
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, presentation: 'modal' }}
                 />
                 <Stack.Screen
                     key={PAGES.WALLET_DETAILS}
                     name={PAGES.WALLET_DETAILS}
                     component={WalletDetails}
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, presentation: 'modal' }}
                 />
                 <Stack.Screen
                     key={PAGES.ONBOARDING}
@@ -67,7 +68,7 @@ const Navigator = () => {
                     key={PAGES.PAYWALL}
                     name={PAGES.PAYWALL}
                     component={Paywall}
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, presentation: 'modal' }}
                 />
             </Stack.Navigator>
             <Toast config={getToastConfig(theme)} />

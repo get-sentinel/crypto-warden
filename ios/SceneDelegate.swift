@@ -77,6 +77,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
   }
+  
+  func scene(_ scene: UIScene, openURLContexts urlContexts: Set<UIOpenURLContext>) {
+    
+    if let urlContext = urlContexts.first {
+      let url = urlContext.url
+      EventEmitter.emitter?.sendEvent(withName: "url", body: url.absoluteString)
+    }
+    
+  }
 }
   
 #if targetEnvironment(macCatalyst)

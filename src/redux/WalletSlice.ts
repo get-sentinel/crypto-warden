@@ -28,7 +28,7 @@ const walletSlice = createSlice({
             let updatedWallet: Wallet = action.payload.updatedWallet
 
             // Find the index of object from array that you want to update
-            const wIndex = walletList.findIndex(w => w.id === updatedWallet.id);
+            const wIndex = walletList.findIndex((w:Wallet) => w.seed === updatedWallet.seed);
 
             // Make sure to avoid incorrect replacement
             // When specific item is not found
