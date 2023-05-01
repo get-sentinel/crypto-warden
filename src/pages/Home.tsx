@@ -261,7 +261,7 @@ const Home = () => {
                             />
                             : <View style={{ display: 'flex', flex: 1, width: '100%', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column' }}>
                                 <Image source={DEFAULT_IMAGE} style={{ width: '100%', maxHeight: '50%', overflow: 'visible' }} />
-                                <Text style={{ fontSize: 16, textAlign: 'center' }}>{"Crypto Warden keeps your seed/recovery phrases secured in your iCloud Keychain.\nYou only can access them, by design.\n\nAh, and it's open-source."}</Text>
+                                <Text style={{ fontSize: 16, textAlign: 'center', color:theme['text-basic-color'] }}>{"Crypto Warden keeps your seed/recovery phrases secured in your iCloud Keychain.\nYou only can access them, by design.\n\nAh, and it's open-source."}</Text>
                                 <Button style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', width: '90%', backgroundColor: theme['background-color-button'], borderRadius: DEFAULT_CORNER_RADIUS, marginTop: 0, borderWidth: 0 }}
                                     onPress={() => {
                                         syncData()
@@ -296,7 +296,7 @@ const Home = () => {
                                 <MaterialCommunityIcons
                                     size={25} name='shield-alert' color={theme['color-primary-500']}
                                 />
-                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN }}>Without syncing you may lose your data if anything happens to this device. Click to enable. </Text>
+                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color:theme['text-basic-color'] }}>Without syncing you may lose your data if anything happens to this device. Click to enable. </Text>
                             </View>
                         </TouchableOpacity>
                         : undefined
