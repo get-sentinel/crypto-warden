@@ -168,7 +168,8 @@ const Settings = () => {
                             authenticated ? Toast.show({
                                 type: 'success',
                                 position: TOAST_POSITION,
-                                text1: 'Copied to clipboard',
+                                text1: 'User ID copied',
+                                text2: 'Share it with the support if asked',
                                 visibilityTime: 2000,
                                 autoHide: true,
                                 topOffset: 30,
@@ -176,7 +177,7 @@ const Settings = () => {
                                 onShow: () => { },
                                 onHide: () => { },
                                 onPress: () => { },
-                                props: { iconName: 'content-copy' }
+                                props: { iconName: 'face-agent' }
                             })
                                 : setSigninModalVisible(true)
                         }}>
