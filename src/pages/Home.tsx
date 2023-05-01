@@ -160,6 +160,21 @@ const Home = () => {
                 onPress: () => { },
                 props: { iconName: 'alert' }
             })
+        } else {
+            Toast.show({
+                type: 'success',
+                position: TOAST_POSITION,
+                text1: 'Sync Completed',
+                text2: 'All available data, if any, have been fetched',
+                visibilityTime: 2000,
+                autoHide: true,
+                topOffset: 30,
+                bottomOffset: 40,
+                onShow: () => { },
+                onHide: () => { },
+                onPress: () => { },
+                props: { iconName: 'check-circle' }
+            })
         }
     }
 
@@ -242,7 +257,7 @@ const Home = () => {
                                     onPress={() => {
                                         syncData()
                                     }}>
-                                    {props => <Text {...props} style={{ width: '80%', color: theme['fab-text-color'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>{`Sync Wallets`}</Text>
+                                    {props => <Text {...props} style={{ width: '80%', color: theme['fab-text-color'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE-4 }}>{`Sync Wallets`}</Text>
                                     }
                                 </Button>
 

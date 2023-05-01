@@ -16,7 +16,7 @@ export const getToastConfig = (theme: Record<string, string>) => {
                 {...rest}
                 style={{
                     backgroundColor: theme['toast-background-color'],
-                    marginBottom: isSmallScreen() ? 35 : 60,
+                    marginBottom: 0,
                     borderLeftWidth: 0,
                     borderRadius: 10
                     // height: 70, // deviceType === HANDSET ? 65 : 65,

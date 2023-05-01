@@ -32,7 +32,7 @@ const Settings = () => {
     const dispatch = useDispatch()
 
     const renderTitle = (props: any) => (
-        <PageTitle title='Settings' props={props} goBack={goBack} />
+        <PageTitle title='Settings' props={props} />
     );
 
     const goBack = () => {
@@ -89,7 +89,7 @@ const Settings = () => {
     }
 
     return (
-        <StableSafeArea>
+        <View style={{flex:1}}>
 
             <TopNavigation
                 style={{
@@ -379,7 +379,9 @@ const Settings = () => {
                         borderColor: 'transparent',
                         display: 'flex',
                         justifyContent: 'space-between',
-                        paddingBottom: 50,
+                        paddingBottom: 0,
+                        paddingHorizontal: DEFAULT_2x_MARGIN,
+                        width:'100%'
                     }}
                 >
                     <MaterialCommunityIcons style={{ marginTop: 10, marginBottom: 10, alignSelf: 'center' }} name="apple" size={70} color={theme['text-basic-color']} />
@@ -465,7 +467,7 @@ const Settings = () => {
                 </Card>
 
             </RNModal>
-        </StableSafeArea>
+        </View>
     )
 }
 

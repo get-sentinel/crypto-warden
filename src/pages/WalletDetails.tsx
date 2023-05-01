@@ -7,7 +7,7 @@ import Wallet from "../class/Wallet";
 import ModalContainer from "../components/ModalContainer";
 import WalletProvidersOverflowMenu from "../components/WalletProvidersOverflowMenu";
 import { updateWallet } from "../redux/WalletSlice";
-import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
+import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, SEED_STATUS_MESSAGE, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { fetchWallets, setWalletsToKeychain } from "../storage/KeychainManager";
@@ -17,6 +17,7 @@ import StableSafeArea from "../components/safeArea/StableSafeArea";
 import { Colors } from "react-native/Libraries/NewAppScreen";
 import { ImageSource } from "react-native-vector-icons/Icon";
 import PageTitle from "../components/PageTitle";
+import { analyzeSeed } from "../utils/utils";
 
 const WalletDetails = React.memo(() => {
     const isDarkMode = useColorScheme() === 'dark';
@@ -45,6 +46,7 @@ const WalletDetails = React.memo(() => {
     const [addressCopy, setAddressCopy] = useState(false)
     const [editMode, setEditMode] = useState(false)
     const [walleteProviderSelectionModalVisible, setWalleteProviderSelectionModalVisible] = useState(false)
+    const [checkSeedStatus, setCheckSeedStatus] = useState(0)
 
     useEffect(() => {
         setWalletName(selectedWallet.name)
@@ -56,6 +58,8 @@ const WalletDetails = React.memo(() => {
         setWalletCreateDate(selectedWallet.createDate)
 
         selectProviderImagePath(selectedWallet.provider)
+
+        analyzeSeed(selectedWallet.seed, setCheckSeedStatus)
     }, [])
 
     useEffect(() => {
@@ -133,7 +137,7 @@ const WalletDetails = React.memo(() => {
     return (
 
         <>
-            <StableSafeArea>
+            <View style={{ flex: 1 }}>
                 <StatusBar
                     barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                     backgroundColor={backgroundStyle.backgroundColor}
@@ -146,13 +150,8 @@ const WalletDetails = React.memo(() => {
                 }}>
 
                     <View style={styles().toolbar}>
-                        <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center', }}
-                            onPress={() => {
-                                navigation.goBack()
-                            }}>
-                            <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'arrow-left'} size={25} color={theme['text-basic-color']} />
-                        </TouchableOpacity>
+                        <PageTitle title='Wallet Details' />
+
                         {
                             editMode
                                 ? <TouchableOpacity
@@ -188,7 +187,7 @@ const WalletDetails = React.memo(() => {
                             <TouchableOpacity style={{ marginRight: DEFAULT_2x_MARGIN }}
                                 disabled={!editMode}
                                 onPress={() => setWalleteProviderSelectionModalVisible(true)}>
-                                <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 1, borderColor: theme['color-basic-300'] }} />
+                                <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 0, borderColor: theme['color-basic-300'] }} />
                                 {editMode
                                     ? <View style={{ borderRadius: 50, width: 21, height: 21, backgroundColor: theme['color-primary-500'], position: 'absolute', right: -5, bottom: -5, justifyContent: 'center', alignItems: 'center' }}>
                                         <MaterialCommunityIcons size={13}
@@ -216,6 +215,30 @@ const WalletDetails = React.memo(() => {
                                     />
                                     : <Text style={styles().walletNameTextStyle}> {walletName} </Text>
                             }
+                        </View>
+
+                        {/* # WALLET SEED PHRASE */}
+                        <View style={{ ...styles().textStyle, ...{ backgroundColor: seedphraseCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
+                            <TouchableOpacity style={styles().copyCell} onPress={() => {
+                                copyToClipboard(walletSeedPhrase)
+                                setSeedphraseCopy(true)
+                            }}>
+                                {
+                                    seedphraseCopy
+                                        ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
+                                        : <Text style={styles().label}>{'seed phrase'}</Text>
+                                }
+                                <Text style={{ ...styles().inputTextStyle, ...{ fontSize: secureEntryForSeed ? 7 : 16 }, ...styles().textAdjustments, ...styles().cellAdjustments }}>{secureEntryForSeed ? '⬤ ⬤ ⬤ ⬤ ⬤ ⬤' : walletSeedPhrase}</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={{}} onPress={() => {
+                                setSecureEntryForSeed(!secureEntryForSeed)
+                                setWalletSeedPhrase(walletSeedPhrase)
+                            }}>
+                                <MaterialCommunityIcons size={20}
+                                    color={theme['color-primary-500']}
+                                    name='eye' />
+                            </TouchableOpacity>
                         </View>
 
                         {/* # WALLET ADDRESS */}
@@ -298,44 +321,26 @@ const WalletDetails = React.memo(() => {
                                     : undefined
                         }
 
-                        {/* # WALLET SEED PHRASE */}
-                        <View style={{ ...styles().textStyle, ...{ backgroundColor: seedphraseCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
-                            <TouchableOpacity style={styles().copyCell} onPress={() => {
-                                copyToClipboard(walletSeedPhrase)
-                                setSeedphraseCopy(true)
-                            }}>
-                                {
-                                    seedphraseCopy
-                                        ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
-                                        : <Text style={styles().label}>{'seed phrase'}</Text>
-                                }
-                                <Text style={{ ...styles().inputTextStyle, ...{ fontSize: secureEntryForSeed ? 7 : 16 }, ...styles().textAdjustments, ...styles().cellAdjustments }}>{secureEntryForSeed ? '⬤ ⬤ ⬤ ⬤ ⬤ ⬤' : walletSeedPhrase}</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={{}} onPress={() => {
-                                setSecureEntryForSeed(!secureEntryForSeed)
-                                setWalletSeedPhrase(walletSeedPhrase)
-                            }}>
-                                <MaterialCommunityIcons size={20}
-                                    color={theme['color-primary-500']}
-                                    name='eye' />
-                            </TouchableOpacity>
-                        </View>
-
-
-                        {
-                            editMode ?
-                                <Button
-                                    style={{ width: '50%', alignSelf: 'center', marginTop: DEFAULT_3x_MARGIN, borderRadius: DEFAULT_CORNER_RADIUS, borderColor: theme['delete-button-background'], borderWidth: 1, backgroundColor: 'transparent' }}
-                                    onPress={() => setDeletionModalVisible(true)}>
-                                    {props => <Text {...props} style={{ color: theme['delete-button-text'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 3 }}>
-                                        {`Delete Wallet`}
-                                    </Text>}
-                                </Button>
-                                : undefined
-                        }
-
                     </ScrollView>
+
+                    {
+                        editMode ?
+                            <Button
+                                style={{ width: '50%', alignSelf: 'center', marginTop: DEFAULT_3x_MARGIN, borderRadius: DEFAULT_CORNER_RADIUS, borderColor: theme['delete-button-background'], borderWidth: 1, backgroundColor: theme['delete-button-background'], marginBottom:DEFAULT_3x_MARGIN }}
+                                onPress={() => setDeletionModalVisible(true)}>
+                                {props => <Text {...props} style={{ color: theme['delete-button-text'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 3 }}>
+                                    {`Delete Wallet`}
+                                </Text>}
+                            </Button>
+                            : undefined
+                    }
+
+
+                    {/* Staus message */}
+                    <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginBottom: DEFAULT_2x_MARGIN }}>
+                        <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'circle'} size={10} color={SEED_STATUS_MESSAGE[checkSeedStatus].color} />
+                        <Text style={{ fontWeight: '500', fontSize: 12, color: theme['text-basic-color'] }}>{SEED_STATUS_MESSAGE[checkSeedStatus].message}</Text>
+                    </View>
 
                     <RNModal
                         isVisible={walleteProviderSelectionModalVisible}
@@ -436,7 +441,7 @@ const WalletDetails = React.memo(() => {
                                     setDeletionModalVisible(false)
                                     deleteWallet()
                                 }}>
-                                {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
+                                {props => <Text {...props} style={{ color: theme['fab-text-color'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
                                     {'Delete'}
                                 </Text>}
                             </Button>
@@ -452,7 +457,7 @@ const WalletDetails = React.memo(() => {
 
                     </RNModal>
                 </View>
-            </StableSafeArea>
+            </View>
 
         </>
     );
@@ -525,6 +530,7 @@ const styles = () => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
+            marginBottom: DEFAULT_3x_MARGIN
         },
         inputField: {
             borderWidth: 0,

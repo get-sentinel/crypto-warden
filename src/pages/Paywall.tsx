@@ -203,7 +203,7 @@ const Paywall = React.memo(() => {
                     </Text>
                     {discountedLifetimePrice
                         ? <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
-                            {` only ${discountedLifetimePrice}`}
+                            {` ${discountedLifetimePrice}`}
                         </Text>
                         : undefined
                     }

@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const accountSlice = createSlice({
     name: 'wallets',
     initialState: {
-        premium: false,
+        premium: true,
         authenticated: false,
         uid: undefined,
         sentinelPremium: false

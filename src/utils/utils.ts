@@ -65,3 +65,34 @@ export const sortWallets = (wallets: Wallet[], sorting: number) => {
             return w.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0)).reverse()
     }
 }
+
+export const analyzeSeed = (nextValue: string, setStatus: (status:number) => void) => {
+
+    // Check that the string is not empty
+    if (nextValue === '') {
+        setStatus(0)
+        return
+    }
+
+    // Check that the string does not start with a space
+    if (nextValue.charAt(0) === " " || nextValue.charAt(nextValue.length - 1) === " ") {
+        setStatus(2)
+        return
+    }
+
+    // Check that the string contains 12 words
+    const words = nextValue.split(" ");
+    if (words.length !== 12) {
+        setStatus(1)
+        return
+    }
+
+    // Check that the string does not contain special characters
+    const regex = /^[a-zA-Z0-9\s]*$/;
+    if (!regex.test(nextValue)) {
+        setStatus(3)
+        return
+    }
+
+    setStatus(4)
+}

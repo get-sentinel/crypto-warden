@@ -4,15 +4,17 @@ import React, { useEffect, useState } from "react";
 import { Dimensions, Image, ImageSourcePropType, ScrollView, StatusBar, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import Wallet from "../class/Wallet";
-import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
+import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, SEED_STATUS_MESSAGE, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from "react-native-toast-message";
 import RNModal from 'react-native-modal';
 import StableSafeArea from "../components/safeArea/StableSafeArea";
 import { Colors } from "react-native/Libraries/NewAppScreen";
-import { getMaxNumberFromArray } from "../utils/utils";
+import { analyzeSeed, getMaxNumberFromArray } from "../utils/utils";
 import { addNewWallet } from "../redux/WalletSlice";
+import PageTitle from "../components/PageTitle";
+
 
 const AddWallet = React.memo(() => {
     const isDarkMode = useColorScheme() === 'dark';
@@ -31,6 +33,7 @@ const AddWallet = React.memo(() => {
     const wallets = useSelector((state: any) => state.walletSlice.wallets);
     const premium = useSelector((state: any) => state.accountSlice.premium);
     const [walleteProviderSelectionModalVisible, setWalleteProviderSelectionModalVisible] = useState(false)
+    const [checkSeedStatus, setCheckSeedStatus] = useState(0)
 
     const selectProviderImagePath = (provider: number | undefined) => {
         let wp = WALLET_PROVIDERS.filter(w => w.id === provider)
@@ -77,15 +80,19 @@ const AddWallet = React.memo(() => {
         navigation.goBack()
     }
 
+    const setSeedValue = (nextValue: string) => {
+        analyzeSeed(nextValue, setCheckSeedStatus)
+        setWalletSeedPhrase(nextValue)
+    }
+
     return (
 
         <>
-            <StableSafeArea>
+            <View style={{ flex: 1 }}>
                 <StatusBar
                     barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                     backgroundColor={backgroundStyle.backgroundColor}
                 />
-
                 <View style={{
                     padding: DEFAULT_PADDING,
                     backgroundColor: theme['color-basic-500'],
@@ -93,21 +100,15 @@ const AddWallet = React.memo(() => {
                 }}>
 
                     <View style={styles().toolbar}>
-                        <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center', }}
-                            onPress={() => {
-                                navigation.goBack()
-                            }}>
-                            <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'arrow-left'} size={25} color={theme['text-basic-color']} />
-                        </TouchableOpacity>
+                        <PageTitle title='New Wallet' />
 
                         <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center', }}
+                            style={{ flexDirection: 'row', alignItems: 'center' }}
                             onPress={() => {
                                 saveNewWallet()
                             }}>
                             <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'content-save-outline'} size={27} color={theme['text-basic-color']} />
-                            <Text style={{ fontWeight: '500', fontSize: 16 }}>Save</Text>
+                            <Text style={{ fontWeight: '500', fontSize: 16, color: theme['text-basic-color'] }}>Save</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -125,7 +126,7 @@ const AddWallet = React.memo(() => {
                         <View style={{ marginBottom: DEFAULT_3x_MARGIN, flexDirection: "row", alignItems: 'center' }}>
                             <TouchableOpacity style={{ marginRight: DEFAULT_2x_MARGIN }}
                                 onPress={() => setWalleteProviderSelectionModalVisible(true)}>
-                                <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 1, borderColor: theme['color-basic-300'] }} />
+                                <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 0, borderColor: theme['color-basic-300'] }} />
                                 <View style={{ borderRadius: 50, width: 21, height: 21, backgroundColor: theme['color-primary-500'], position: 'absolute', right: -5, bottom: -5, justifyContent: 'center', alignItems: 'center' }}>
                                     <MaterialCommunityIcons size={13}
                                         color={theme['text-primary-color-button']}
@@ -133,17 +134,42 @@ const AddWallet = React.memo(() => {
                                         style={{}} />
                                 </View>
                             </TouchableOpacity>
+
                             <Input
                                 value={walletName}
                                 textStyle={styles().walletNameTextStyle}
                                 // placeholder='Wallet Name*'
                                 caption=''
                                 size='medium'
-                                style={{ borderWidth: 0, paddingHorizontal: 0, paddingVertical: 0, marginVertical: 0, flex: 1, backgroundColor: theme['color-basic-600'] }}
+                                style={{ paddingHorizontal: 0, paddingVertical: 0, marginVertical: 0, flex: 1, backgroundColor: theme['color-basic-600'], borderWidth: 0, borderColor: theme['color-basic-300'], borderRadius: 8, }}
                                 onChangeText={(nextValue: string) => setWalletName(nextValue)}
                                 accessoryRight={() => {
                                     return walletName
                                         ? <TouchableOpacity onPress={() => setWalletName('')}>
+                                            <MaterialCommunityIcons size={20}
+                                                color={theme['text-primary-color-button']}
+                                                name='window-close' />
+                                        </TouchableOpacity>
+                                        : <View />
+                                }}
+                            />
+                        </View>
+
+                        {/* # WALLET SEED PHRASE */}
+                        <View style={{ ...styles().inputStyle, ...{ paddingTop: 15, paddingBottom: 10 } }}>
+                            <Text style={styles().label}>{'seed phrase'}</Text>
+                            <Input
+                                value={walletSeedPhrase}
+                                textStyle={styles().inputTextStyle}
+                                // placeholder='example: sea one rainbow elephant sand phone ...'
+                                caption=''
+                                multiline={true}
+                                size='medium'
+                                style={{ ...styles().inputField, ...{ height: 128 } }}
+                                onChangeText={(nextValue: string) => setSeedValue(nextValue)}
+                                accessoryRight={() => {
+                                    return walletSeedPhrase
+                                        ? <TouchableOpacity onPress={() => setWalletSeedPhrase('')}>
                                             <MaterialCommunityIcons size={20}
                                                 color={theme['text-primary-color-button']}
                                                 name='window-close' />
@@ -199,30 +225,13 @@ const AddWallet = React.memo(() => {
                             />
                         </View>
 
-                        {/* # WALLET SEED PHRASE */}
-                        <View style={{ ...styles().inputStyle, ...{ paddingTop: 15, paddingBottom: 10 } }}>
-                            <Text style={styles().label}>{'seed phrase'}</Text>
-                            <Input
-                                value={walletSeedPhrase}
-                                textStyle={styles().inputTextStyle}
-                                // placeholder='example: sea one rainbow elephant sand phone ...'
-                                caption=''
-                                multiline={true}
-                                size='medium'
-                                style={{ ...styles().inputField, ...{ height: 128 } }}
-                                onChangeText={(nextValue: string) => setWalletSeedPhrase(nextValue)}
-                                accessoryRight={() => {
-                                    return walletSeedPhrase
-                                        ? <TouchableOpacity onPress={() => setWalletSeedPhrase('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
-                                                name='window-close' />
-                                        </TouchableOpacity>
-                                        : <View />
-                                }}
-                            />
-                        </View>
                     </ScrollView>
+
+                    {/* Staus message */}
+                    <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginBottom: DEFAULT_2x_MARGIN }}>
+                        <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'circle'} size={10} color={SEED_STATUS_MESSAGE[checkSeedStatus].color} />
+                        <Text style={{ fontWeight: '500', fontSize: 12, color: theme['text-basic-color'] }}>{SEED_STATUS_MESSAGE[checkSeedStatus].message}</Text>
+                    </View>
 
                     <RNModal
                         isVisible={walleteProviderSelectionModalVisible}
@@ -282,7 +291,7 @@ const AddWallet = React.memo(() => {
                                 onPress={() => {
                                     setWalleteProviderSelectionModalVisible(false)
                                 }}>
-                                {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
+                                {props => <Text {...props} style={{ color: theme['fab-text-color'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
                                     {'Close Menu'}
                                 </Text>}
                             </Button>
@@ -290,7 +299,7 @@ const AddWallet = React.memo(() => {
 
                     </RNModal>
                 </View>
-            </StableSafeArea>
+            </View>
 
         </>
     );
@@ -308,15 +317,15 @@ const styles = () => {
             marginHorizontal: 0,
             paddingHorizontal: 0,
             fontSize: 21,
-            fontWeight: '600'
+            fontWeight: '600',
         },
         inputStyle: {
-            marginBottom: DEFAULT_1x_MARGIN,
+            marginBottom: DEFAULT_2x_MARGIN,
             paddingHorizontal: DEFAULT_1x_MARGIN,
             paddingTop: DEFAULT_1x_MARGIN,
-            borderWidth: 1,
+            borderWidth: 0,
             borderColor: theme['color-basic-300'],
-            borderRadius: 4,
+            borderRadius: 8,
             alignItems: 'flex-start',
             flexDirection: 'column',
             justifyContent: 'center',
@@ -349,6 +358,7 @@ const styles = () => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
+            marginBottom: DEFAULT_3x_MARGIN
         },
         inputField: {
             borderWidth: 0,

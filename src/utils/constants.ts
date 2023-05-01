@@ -157,3 +157,32 @@ export const WALLET_PROVIDERS = [
 ]
 
 
+interface SeedStatusMessage {
+    [key: number]: {
+        message: string;
+        color: string;
+    };
+}
+
+export const SEED_STATUS_MESSAGE: SeedStatusMessage = {
+    0: {
+        message: 'No seed has been provided yet',
+        color: 'rgb(212, 182, 74)'
+    },
+    1: {
+        message: 'Seed should be composed of 12 words',
+        color: 'rgb(222, 77, 67)'
+    },
+    2: {
+        message: 'Seed starts or ends with a space',
+        color: 'rgb(222, 77, 67)'
+    },
+    3: {
+        message: 'Seed contains special characters',
+        color: 'rgb(222, 77, 67)'
+    },
+    4: {
+        message: 'Seed looks fine 😉',
+        color: 'rgb(94, 179, 79)'
+    }
+}
