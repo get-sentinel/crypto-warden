@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21507" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
     <device id="retina4_7" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21678"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -18,28 +17,16 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="icon" translatesAutoresizingMaskIntoConstraints="NO" id="Pfy-gD-rND">
-                                <rect key="frame" x="109" y="201" width="157" height="157"/>
+                                <rect key="frame" x="106" y="252" width="163" height="163"/>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Crypto Warden" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="18" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
-                                <rect key="frame" x="0.0" y="402" width="375" height="43"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="43" id="SVW-Gs-WU5"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="36"/>
-                                <color key="textColor" systemColor="secondarySystemBackgroundColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="Pfy-gD-rND" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="109" id="3Nm-dh-Ajf"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="EiW-oj-0gH"/>
-                            <constraint firstAttribute="trailing" secondItem="GJd-Yh-RWb" secondAttribute="trailing" id="MNc-Sw-mEm"/>
-                            <constraint firstItem="GJd-Yh-RWb" firstAttribute="top" secondItem="Pfy-gD-rND" secondAttribute="bottom" constant="44" id="Nmc-rk-RnR"/>
-                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="bottom" secondItem="GJd-Yh-RWb" secondAttribute="bottom" constant="222" id="W1f-0y-15S"/>
-                            <constraint firstItem="Pfy-gD-rND" firstAttribute="centerX" secondItem="GJd-Yh-RWb" secondAttribute="centerX" id="hvM-ci-zad"/>
-                            <constraint firstItem="Pfy-gD-rND" firstAttribute="top" secondItem="Bcu-3y-fUS" secondAttribute="top" constant="201" id="lTD-vp-Fll"/>
+                            <constraint firstItem="Pfy-gD-rND" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Cm2-xq-n3G"/>
+                            <constraint firstItem="Pfy-gD-rND" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="HOg-PW-5ey"/>
+                            <constraint firstItem="Pfy-gD-rND" firstAttribute="top" secondItem="Bcu-3y-fUS" secondAttribute="top" constant="232" id="Oie-bB-bdN"/>
+                            <constraint firstItem="Pfy-gD-rND" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="106" id="joM-Qv-GBJ"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -49,9 +36,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="icon" width="128" height="128"/>
-        <systemColor name="secondarySystemBackgroundColor">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </systemColor>
+        <image name="icon" width="256" height="256"/>
     </resources>
 </document>
