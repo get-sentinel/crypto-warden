@@ -4,23 +4,39 @@ import { loadWallets } from '../redux/WalletSlice';
 import { KEYCHAIN_PATHS } from '../utils/constants';
 import { getMaxNumberFromArray } from '../utils/utils';
 import { NativeModules } from "react-native";
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 const { KeychainWrapper } = NativeModules;
 
-export const setValueForKey = (key: string, value: string, synchronizable: boolean) => {
-    return KeychainWrapper.setValueForKey(value, key, synchronizable)
+export const setValueForKey = async (key: string, value: string, synchronizable: boolean) => {
+    // return KeychainWrapper.setValueForKey(value, key, synchronizable)
+
+    try {
+        EncryptedStorage.setItem(key, value);
+      } catch (e) {
+        console.log(e);
+      }
 }
 
-export const getValueForKey = (key: string, synchronizable: boolean) => {
-    return KeychainWrapper.getValueForKey(key, synchronizable)
-}
+export const getValueForKey = async (key: string, synchronizable: boolean) => {
+    try {
+        const value = EncryptedStorage.getItem(key);
+        console.log("99998",value)
+      return value;
+    } catch (e) {
+        console.log(e);
+        console.log("99998",e)
+      return null;
+    }
+  };
+  
 
-export const setWalletsToKeychain = (localWallets: Wallet[], synchronizable: boolean = false) => {
+export const setWalletsToKeychain = async (localWallets: Wallet[], synchronizable: boolean = false) => {
 
     var walletsToSave = localWallets
 
     if (synchronizable) {
-        let remoteWallets = getWalletsFromKeychain({ synchronizable: synchronizable })
+        let remoteWallets = await getWalletsFromKeychain({ synchronizable: synchronizable })
         walletsToSave = mergeWallets(localWallets, remoteWallets);
     }
 
@@ -29,9 +45,9 @@ export const setWalletsToKeychain = (localWallets: Wallet[], synchronizable: boo
     return setValueForKey(KEYCHAIN_PATHS.WALLETS, stringifiedWallets, synchronizable)
 }
 
-export const getWalletsFromKeychain = ({ synchronizable = true }: { synchronizable?: boolean }) => {
-    const value = getValueForKey(KEYCHAIN_PATHS.WALLETS, synchronizable);
-    if (!value || value === '[]' || value === '') {
+export const getWalletsFromKeychain = async ({ synchronizable = true }: { synchronizable?: boolean }) => {
+    const value = await getValueForKey(KEYCHAIN_PATHS.WALLETS, synchronizable);
+    if (value === null || value === '') {
         console.log('Keychain is empty');
         return []
     }
@@ -60,8 +76,8 @@ export const getWalletsFromKeychain = ({ synchronizable = true }: { synchronizab
     return remoteWalletInstances
 };
 
-export const fetchWallets = ({ dispatch, synchronizable, localWallets = [] }: { dispatch: Dispatch<any>, synchronizable?: boolean, localWallets?: Wallet[] }) => {
-    let remoteWallets = getWalletsFromKeychain({ synchronizable: synchronizable })
+export const fetchWallets = async ({ dispatch, synchronizable, localWallets = [] }: { dispatch: Dispatch<any>, synchronizable?: boolean, localWallets?: Wallet[] }) => {
+    let remoteWallets = await getWalletsFromKeychain({ synchronizable: synchronizable })
 
     if (localWallets?.length > 0) {
         const mergedWallets = mergeWallets(localWallets, remoteWallets);

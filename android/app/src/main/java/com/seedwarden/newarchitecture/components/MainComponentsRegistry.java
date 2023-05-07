@@ -1,4 +1,4 @@
-package com.seedwarden.newarchitecture.components;
+package com.sentinel.warden.newarchitecture.components;
 
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;

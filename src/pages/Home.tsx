@@ -33,6 +33,8 @@ import { setAuthenticated, setPremium, setSentinelPremium, setUID } from '../red
 import auth from '@react-native-firebase/auth';
 import { checkPremium } from '../iap/PurchaseIAP';
 import Toast from 'react-native-toast-message';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import { KEYCHAIN_PATHS } from '../utils/constants';
 
 const revenueCatConfig = require('../revenueCatConfig/revenueCatConfig.json')
 
@@ -51,6 +53,7 @@ const Home = () => {
     let emitter = new NativeEventEmitter(NativeModules.EventEmitter)
 
     useEffect(() => {
+
         const connectRevenueCat = async () => {
 
             try {

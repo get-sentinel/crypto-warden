@@ -312,7 +312,7 @@
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			packageReferences = (
 				925F42F2296573AB0068854A /* XCRemoteSwiftPackageReference "KeychainAccess" */,
-				92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic" */,
+				92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic.git" */,
 			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
@@ -842,7 +842,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic" */ = {
+		92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic.git" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mhdhejazi/Dynamic.git";
 			requirement = {
@@ -863,7 +863,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		92083B0B296AEC4400D9C7BC /* Dynamic */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic" */;
+			package = 92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic.git" */;
 			productName = Dynamic;
 		};
 		925F42F3296573AB0068854A /* KeychainAccess */ = {
