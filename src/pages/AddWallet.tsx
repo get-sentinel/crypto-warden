@@ -28,7 +28,7 @@ const AddWallet = React.memo(() => {
     const [walletAddress, setWalletAddress] = useState<string>('');
     const [walletSeedPhrase, setWalletSeedPhrase] = useState<string>('');
     const [walletPassword, setWalletPassword] = useState<string>('');
-    const [walletProvider, setWalletProvider] = useState(0);
+    const [walletProvider, setWalletProvider] = useState(WALLET_PROVIDERS[0].id);
     const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType>(WALLET_PROVIDERS[0].imagePath);
     const wallets = useSelector((state: any) => state.walletSlice.wallets);
     const premium = useSelector((state: any) => state.accountSlice.premium);
