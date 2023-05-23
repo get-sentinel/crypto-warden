@@ -441,7 +441,7 @@ const WalletDetails = React.memo(() => {
                                     setDeletionModalVisible(false)
                                     deleteWallet()
                                 }}>
-                                {props => <Text {...props} style={{ color: theme['fab-text-color'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
+                                {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
                                     {'Delete'}
                                 </Text>}
                             </Button>

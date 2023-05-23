@@ -240,7 +240,7 @@ const Home = () => {
                             <TouchableOpacity
                                 style={{ ...styles.actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
                                 onPress={() => addNewWallet()}>
-                                <MaterialCommunityIcons name={'plus'} size={20} color={theme['fab-text-color']} />
+                                <MaterialCommunityIcons name={'plus'} size={20} color={theme['text-primary-color-button']} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -285,7 +285,7 @@ const Home = () => {
                                     onPress={() => {
                                         syncData()
                                     }}>
-                                    {props => <Text {...props} style={{ width: '80%', color: theme['fab-text-color'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 4 }}>{`Sync Wallets`}</Text>
+                                    {props => <Text {...props} style={{ width: '80%', color: theme['text-primary-color-button'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 4 }}>{`Sync Wallets`}</Text>
                                     }
                                 </Button>
 

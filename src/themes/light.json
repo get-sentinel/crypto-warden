@@ -34,7 +34,6 @@
   "segment-background-color": "$color-basic-800",
   "segment-inactive-text-color": "#16181E",
   "fab-background-color": "#292929",
-  "fab-text-color": "$color-basic-500",
   "color-purchase": "#18d100",
   "filled-account-cell": "$color-basic-600",
   "unselected-icon-color": "rgb(150,150,150)",
