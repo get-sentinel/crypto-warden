@@ -16,9 +16,8 @@ import Purchases from "react-native-purchases";
 import { getLifetimeIAPDetails, purchaseIAP } from "../iap/PurchaseIAP";
 import PaywallCell from "../components/cells/PaywallCell";
 import PaywallFeatureCell from "../components/cells/PaywallFeatureCell";
-import PREMIUM from '../assets/premium.png';
+import ICON from '../assets/app-icon.png';
 import PageTitle from "../components/PageTitle";
-import StableSafeArea from "../components/safeArea/StableSafeArea";
 
 const Paywall = React.memo(() => {
 
@@ -112,43 +111,29 @@ const Paywall = React.memo(() => {
                 </View>
             </View>
 
+            <Image
+                source={ICON}
+                style={{ width: 100, height: 100, borderRadius: 10, alignSelf: 'center' }}
+            />
+
+            <Text style={{ fontSize: 16, fontWeight: '400', color: theme['text-basic-color'], textAlign:'center', marginTop:DEFAULT_3x_MARGIN }}>Purchase Crypto Warden Plus to enjoy a beautiful Dark Mode and support the Open Source Project.</Text>
+
             <View
                 style={{
-                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingBottom: 0
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingBottom: 0, flex: 1
                 }}>
 
+
                 <PaywallFeatureCell
-                    featureTitle="Unlimited Wallets"
-                    featureDescription="Add as many wallets as you want. No limits."
+                    featureTitle="Dark Mode"
+                    featureDescription="Enjoy beautiful dark mode for Crypto Warden."
                 />
 
-                <Divider style={styles().divider} />
+                {/* <Divider style={styles().divider} /> */}
 
                 <PaywallFeatureCell
-                    featureTitle="Device Sync"
-                    featureDescription="Sync automatically on all your devices via iCloud Keychain."
-                />
-
-                <Divider style={styles().divider} />
-
-
-                <PaywallFeatureCell
-                    featureTitle="Privacy Friendly"
-                    featureDescription="We cannot access any of your data by design."
-                />
-
-                <Divider style={styles().divider} />
-
-                <PaywallFeatureCell
-                    featureTitle="Support our work"
+                    featureTitle="Support Open Source project"
                     featureDescription="This purchase will support us and help us grow. Thank you for that."
-                />
-
-                <Divider style={styles().divider} />
-
-                <PaywallFeatureCell
-                    featureTitle="All upcoming new features"
-                    featureDescription="Enjoy all new features that will be released along our journey."
                 />
 
             </View>
@@ -162,17 +147,17 @@ const Paywall = React.memo(() => {
                 borderRadius: DEFAULT_CORNER_RADIUS,
             }}>
 
-                <PaywallCell
+                {/* <PaywallCell
                     paywallOption="One-Time"
                     paywallOptionDescription="Pay once, enjoy forever."
                     paywallOptionPrice={`${lifetimePrice === '' ? '$ 5.99' : lifetimePrice}`}
                     selected={true}
                     onPress={() => console.log()}
-                />
+                /> */}
 
             </View>
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: DEFAULT_1x_MARGIN }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: DEFAULT_2x_MARGIN }}>
                 <Text style={{ color: theme['secondary-text'], fontSize: 12 }}>
                     {'By purchasing you agree to the '}
                     <Text style={{ color: theme['color-primary-500'], fontSize: 12 }}
@@ -193,7 +178,7 @@ const Paywall = React.memo(() => {
                 onPress={() => purchase()}>
                 {props => <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '100%', paddingHorizontal: 10, paddingVertical: 0 }}>
                     <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
-                        {`Upgrade for just`}
+                        {`Purchase for just`}
                     </Text>
                     <Text {...props} style={{
                         color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0, textDecorationLine: discountedLifetimePrice ? 'line-through' : undefined,

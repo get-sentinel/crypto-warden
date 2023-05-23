@@ -95,7 +95,7 @@ export const setDataToRemote = async ({ securityOption, uid, value }: { security
     return success
 }
 
-const setToLocalStorage = async ({ key, value }: { key: string, value: string }) => {
+export const setToLocalStorage = async ({ key, value }: { key: string, value: string }) => {
     try {
         if (Platform.OS === 'android') {
             await EncryptedStorageManager.setValueForKey({ key: key, value: value })

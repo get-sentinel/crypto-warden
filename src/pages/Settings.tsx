@@ -1,14 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { Button, Card, Divider, Icon, Text, TopNavigation, useTheme } from '@ui-kitten/components';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Image, View, ImageBackground } from 'react-native';
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Image, View, ImageBackground, Switch } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useDispatch, useSelector } from 'react-redux';
 import PageTitle from '../components/PageTitle';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
-import { APP_STORE_IOS_ID, BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, DEFAULT_TEXT_SIZE, PAGES, TOAST_POSITION } from '../utils/constants';
+import { APP_STORE_IOS_ID, BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, DEFAULT_TEXT_SIZE, LOCAL_STORAGE_KEYS, PAGES, TOAST_POSITION } from '../utils/constants';
 import { openURL } from '../utils/utils';
 import DeviceInfo from 'react-native-device-info';
 import AUTHENTICATOR_ICON from '../assets/authenticator.jpg'
@@ -19,7 +19,8 @@ import Toast from 'react-native-toast-message';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Rate from 'react-native-rate'
 import SettingsCell from '../components/cells/SettingsCell';
-import PREMIUM_BACKGROUND from '../assets/premium-background.png'
+import { setDarkMode } from '../redux/AccountSlice';
+import { setToLocalStorage } from '../storage/StorageManager';
 
 const Settings = () => {
     const theme = useTheme();
@@ -29,6 +30,7 @@ const Settings = () => {
     const authenticated = useSelector((state: any) => state.accountSlice.authenticated);
     const [signinModalVisible, setSigninModalVisible] = useState(false)
     const [deletionModalVisible, setDeletionModalVisible] = useState(false)
+    const darkMode = useSelector((state: any) => state.accountSlice.darkMode);
     const dispatch = useDispatch()
 
     const renderTitle = (props: any) => (
@@ -66,8 +68,11 @@ const Settings = () => {
         })
     }
 
-    const purchasePremium = () => {
-        navigation.navigate(PAGES.PAYWALL)
+
+    const onDarkModeValueChange = async () => {
+        let newValue = !darkMode
+        await setToLocalStorage({ key: LOCAL_STORAGE_KEYS.DARK_MODE, value: newValue.toString() })
+        dispatch(setDarkMode(newValue))
     }
 
     return (
@@ -87,24 +92,30 @@ const Settings = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 50, paddingTop: 0, marginTop: 20 }}>
 
-                {
-                    !premium
-                        ? <TouchableOpacity
-                            onPress={() => purchasePremium()}
-                            style={styles().settingsBox}>
-                            <ImageBackground
-                                source={PREMIUM_BACKGROUND}
-                                imageStyle={{ borderRadius: DEFAULT_CORNER_RADIUS }}
-                                style={{ height: 55, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
-                            >
-                                <Text style={{ fontSize: 22, fontWeight: '700', color: 'rgb(34,52,45)' }}> Crypto Warden </Text>
-                                <View style={{ padding: 6, backgroundColor: '#fff', borderRadius: DEFAULT_CORNER_RADIUS }}>
-                                    <Text style={{ fontSize: 19, fontWeight: '800', color: 'rgb(34,52,45)' }}> Plus </Text>
-                                </View>
-                            </ImageBackground>
-                        </TouchableOpacity>
-                        : undefined
-                }
+                <View style={styles().settingsBox}>
+
+                    <View style={styles().settingsItem}>
+                        <View style={styles().settingsTextAndIcon}>
+                            <View style={{ ...styles().iconBox, ...{ backgroundColor: 'rgb(0,0,0)' } }}>
+                                <MaterialCommunityIcons name="compare" size={16} color={'#fff'} />
+                            </View>
+                            <Text style={styles().settingsText}>Dark Mode</Text>
+                        </View>
+                        {
+                            premium
+                                ? < Switch
+                                    trackColor={{ false: theme['color-basic-600'], true: theme['color-basic-500'] }}
+                                    thumbColor={darkMode ? theme['color-primary-500'] : theme['color-basic-600']}
+                                    onValueChange={() => onDarkModeValueChange()}
+                                    value={darkMode}
+                                />
+                                : <TouchableOpacity onPress={() => navigation.navigate(PAGES.PAYWALL)}>
+                                    <Text style={{ color: theme['text-basic-color'] }}>Upgrade</Text>
+                                </TouchableOpacity>
+                        }
+                    </View>
+
+                </View>
 
                 <View style={styles().settingsBox}>
 
@@ -114,7 +125,7 @@ const Settings = () => {
                             <View style={{ ...styles().iconBox, ...{ backgroundColor: 'rgb(249,222,82)' } }}>
                                 <MaterialCommunityIcons name="star" size={16} color={'#fff'} />
                             </View>
-                            <Text style={styles().settingsText}>Love this app? Rate it 😊</Text>
+                            <Text style={styles().settingsText}>Give us a rating 😊</Text>
                         </View>
                         <Icon name='diagonal-arrow-right-up-outline' fill={theme['text-basic-color']} style={styles().settingsItemIcon} />
                     </TouchableOpacity>

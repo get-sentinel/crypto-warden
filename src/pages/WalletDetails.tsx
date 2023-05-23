@@ -10,7 +10,6 @@ import { updateWallet } from "../redux/WalletSlice";
 import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, SEED_STATUS_MESSAGE, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { fetchWallets, setWalletsToKeychain } from "../storage/KeychainManager";
 import Toast from "react-native-toast-message";
 import RNModal from 'react-native-modal';
 import StableSafeArea from "../components/safeArea/StableSafeArea";
@@ -20,10 +19,6 @@ import PageTitle from "../components/PageTitle";
 import { analyzeSeed } from "../utils/utils";
 
 const WalletDetails = React.memo(() => {
-    const isDarkMode = useColorScheme() === 'dark';
-    const backgroundStyle = {
-        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-    };
     const theme = useTheme();
     const dispatch = useDispatch()
     const navigation = useNavigation()
@@ -38,8 +33,6 @@ const WalletDetails = React.memo(() => {
     const [secureEntryForPassword, setSecureEntryForPassword] = useState(true);
     const [secureEntryForSeed, setSecureEntryForSeed] = useState(true);
     const selectedWallet = useSelector((state: any) => state.walletSlice.selectedWallet);
-    const wallets = useSelector((state: any) => state.walletSlice.wallets);
-    const premium = useSelector((state: any) => state.accountSlice.premium);
     const [deletionModalVisible, setDeletionModalVisible] = useState(false)
     const [seedphraseCopy, setSeedphraseCopy] = useState(false)
     const [passwordCopy, setPasswordCopy] = useState(false)
@@ -122,7 +115,7 @@ const WalletDetails = React.memo(() => {
             updateDate: new Date()
         })
 
-        dispatch(updateWallet({ updatedWallet: updatedWallet, synchronizable: premium }))
+        dispatch(updateWallet({ updatedWallet: updatedWallet }))
     }
 
     const deleteWallet = () => {
@@ -138,10 +131,6 @@ const WalletDetails = React.memo(() => {
 
         <>
             <View style={{ flex: 1 }}>
-                <StatusBar
-                    barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                    backgroundColor={backgroundStyle.backgroundColor}
-                />
 
                 <View style={{
                     padding: DEFAULT_PADDING,

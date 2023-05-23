@@ -10,7 +10,8 @@
 
 
 import React, { useEffect } from 'react';
-
+import { default as light } from './src/themes/light.json';
+import { default as dark } from './src/themes/dark.json';
 import * as eva from '@eva-design/eva';
 import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
 import Home from './src/pages/Home';
@@ -20,13 +21,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useTheme } from "@ui-kitten/components";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PAGES, TAB_ICON_SIZE } from './src/utils/constants';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit'
 import walletSlice from './src/redux/WalletSlice'
 import accountSlice from './src/redux/AccountSlice'
-import { default as light } from './src/themes/light.json';
-import { default as dark } from './src/themes/dark.json';
-import { useColorScheme } from 'react-native';
+import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import WalletDetails from './src/pages/WalletDetails';
@@ -49,22 +48,30 @@ const store = configureStore({
 
 const App = () => {
 
-  const Stack = createNativeStackNavigator();
-
   return (
     <>
       <IconRegistry icons={EvaIconsPack} />
       <Provider store={store}>
         <SafeAreaProvider>
-          <ApplicationProvider {...eva}
-            theme={useColorScheme() === 'dark' ? { ...dark } : { ...light }}>
-            <Navigator />
-          </ApplicationProvider>
+          <AppProvider />
         </SafeAreaProvider>
       </Provider>
     </>
   );
 };
+
+const AppProvider = () => {
+
+  const darkMode = useSelector((state: any) => state.accountSlice.darkMode)
+
+  return (
+    <ApplicationProvider {...eva}
+      theme={darkMode ? { ...dark } : { ...light }}>
+      <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} />
+      <Navigator />
+    </ApplicationProvider >
+  )
+}
 
 export default App;
 

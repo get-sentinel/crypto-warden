@@ -10,7 +10,8 @@ const accountSlice = createSlice({
         uid: undefined,
         sentinelPremium: false,
         securityOption: undefined as string | undefined,
-        password: undefined
+        password: undefined,
+        darkMode: false
     },
     reducers: {
         setPremium: (state, action) => {
@@ -35,8 +36,11 @@ const accountSlice = createSlice({
         setPassword: (state, action) => {
             state.password = action.payload
         },
+        setDarkMode: (state, action) => {
+            state.darkMode = action.payload
+        }
     }
 })
 
-export const { setPremium, setAuthenticated, setUID, setSentinelPremium, setSecurityOption, setPassword } = accountSlice.actions
+export const { setPremium, setAuthenticated, setUID, setSentinelPremium, setSecurityOption, setPassword, setDarkMode } = accountSlice.actions
 export default accountSlice.reducer

@@ -22,14 +22,14 @@ import WalletCell from '../components/cells/WalletCell';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedWallet } from '../redux/WalletSlice';
 import { useNavigation } from '@react-navigation/native';
-import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_PADDING, LOCAL_STORAGE_KEYS, PAGES, SECURITY_OPTIONS, TOAST_POSITION, TOP_NAV_TITLE_SIZE, TOP_NAV_TITLE_WEIGHT } from '../utils/constants';
+import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_PADDING, LOCAL_STORAGE_KEYS, PAGES, SECURITY_OPTIONS, TOAST_POSITION, TOP_NAV_TITLE_SIZE, TOP_NAV_TITLE_WEIGHT, c } from '../utils/constants';
 // import { fetchWallets } from '../storage/KeychainManager';
 import { RefreshControl } from 'react-native-gesture-handler';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
 import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png'
 import Purchases from 'react-native-purchases';
 import { Platform } from 'react-native';
-import { setAuthenticated, setPassword, setPremium, setSecurityOption, setSentinelPremium, setUID } from '../redux/AccountSlice';
+import { setAuthenticated, setDarkMode, setPassword, setSecurityOption, setUID } from '../redux/AccountSlice';
 import auth from '@react-native-firebase/auth';
 import { checkPremium } from '../iap/PurchaseIAP';
 import Toast from 'react-native-toast-message';
@@ -42,7 +42,6 @@ const revenueCatConfig = require('../revenueCatConfig/revenueCatConfig.json')
 
 const Home = () => {
 
-    const isDarkMode = useColorScheme() === 'dark';
     const wallets = useSelector((state: any) => state.walletSlice.wallets);
     const premium = useSelector((state: any) => state.accountSlice.premium);
     const uid = useSelector((state: any) => state.accountSlice.uid);
@@ -88,7 +87,7 @@ const Home = () => {
         }
 
         let urlListener = emitter.addListener('url', (url: string) => {
-            addNewWalletFromURL(dispatch, url, wallets, premium)
+            addNewWalletFromURL(dispatch, url, wallets)
         });
 
         const unsubscribe = subscribeFirebase()
@@ -101,6 +100,9 @@ const Home = () => {
             if (password) {
                 dispatch(setPassword(password))
             }
+
+            const darkMode = await getFromLocalStorage({ key: LOCAL_STORAGE_KEYS.DARK_MODE })
+            dispatch(setDarkMode(darkMode === 'true'))
 
         }
 
@@ -140,10 +142,6 @@ const Home = () => {
         }
     }, [securityOption])
 
-    const backgroundStyle = {
-        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-    };
-
     const renderItem = ({ item, index }: { item: Wallet, index: any }) => (
         <WalletCell
             item={item}
@@ -162,56 +160,16 @@ const Home = () => {
     }
 
     const addNewWallet = () => {
-        if (premium || wallets.length < 1) {
-            navigation.navigate(PAGES.ADD)
-        } else {
-            navigation.navigate(PAGES.PAYWALL)
-        }
+        navigation.navigate(PAGES.ADD)
     }
 
     const syncData = () => {
         getWalletsAndDispatch({ dispatch: dispatch, securityOption: securityOption, uid: uid, local: wallets })
-
-        if (!premium) {
-            Toast.show({
-                type: 'success',
-                position: TOAST_POSITION,
-                text1: 'Upgrade required',
-                text2: 'Upgrade to Warden Plus to enable syncing',
-                visibilityTime: 2000,
-                autoHide: true,
-                topOffset: 30,
-                bottomOffset: 40,
-                onShow: () => { },
-                onHide: () => { },
-                onPress: () => { },
-                props: { iconName: 'alert' }
-            })
-        } else {
-            Toast.show({
-                type: 'success',
-                position: TOAST_POSITION,
-                text1: 'Sync Completed',
-                text2: 'All available data, if any, have been fetched',
-                visibilityTime: 2000,
-                autoHide: true,
-                topOffset: 30,
-                bottomOffset: 40,
-                onShow: () => { },
-                onHide: () => { },
-                onPress: () => { },
-                props: { iconName: 'check-circle' }
-            })
-        }
     }
 
     return (
         <>
             <StableSafeArea>
-                <StatusBar
-                    barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                    backgroundColor={backgroundStyle.backgroundColor}
-                />
 
                 <View style={{
                     padding: DEFAULT_PADDING,
@@ -294,7 +252,7 @@ const Home = () => {
                 </View>
 
                 {
-                    !premium && sortedWallets.length > 0
+                    !premium
                         ? <TouchableOpacity
                             onPress={() => navigation.navigate(PAGES.PAYWALL)}
                             style={{ width: '100%', marginTop: 10, marginBottom: 50 }}>
@@ -313,9 +271,9 @@ const Home = () => {
                                     paddingHorizontal: DEFAULT_2x_MARGIN
                                 }}>
                                 <MaterialCommunityIcons
-                                    size={25} name='shield-alert' color={theme['color-primary-500']}
+                                    size={25} name='weather-night' color={theme['color-primary-500']}
                                 />
-                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color: theme['text-basic-color'] }}>Without syncing you may lose your data if anything happens to this device. Click to enable. </Text>
+                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color: theme['text-basic-color'] }}>Get a beatiful Dark Mode.</Text>
                             </View>
                         </TouchableOpacity>
                         : undefined

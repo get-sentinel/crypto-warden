@@ -107,7 +107,7 @@ export const findProviderIdByName = (name: string) => {
     return walletProvider ? walletProvider.id : 0;
 }
 
-export const addNewWalletFromURL = (dispatch: Dispatch<any>, url: string, wallets: Wallet[], synchronizable: boolean) => {
+export const addNewWalletFromURL = (dispatch: Dispatch<any>, url: string, wallets: Wallet[]) => {
     // Split the URL by "//" to get the wallet name and remaining string
     const parts = url.split('//');
 
@@ -170,5 +170,5 @@ export const addNewWalletFromURL = (dispatch: Dispatch<any>, url: string, wallet
         updateDate: new Date()
     })
 
-    dispatch(addNewWallet({ newWallet: newWallet, synchronizable: synchronizable }))
+    dispatch(addNewWallet({ newWallet: newWallet }))
 }

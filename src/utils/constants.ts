@@ -54,7 +54,8 @@ export const E_STORAGE_KEY = {
 
 export const LOCAL_STORAGE_KEYS = {
     "PASSWORD": Platform.OS === 'android' ? "com.sentinel.cryptowarden.password" : "password",
-    "SECURITY_OPTION": Platform.OS === 'android' ? "com.sentinel.cryptowarden.securityOption" : "securityOption"
+    "SECURITY_OPTION": Platform.OS === 'android' ? "com.sentinel.cryptowarden.securityOption" : "securityOption",
+    "DARK_MODE": Platform.OS === 'android' ? "com.sentinel.cryptowarden.darkMode" : "darkMode"
 }
 
 export const COLLECTION = {

@@ -15,7 +15,7 @@ import Home from './pages/Home';
 import Add from './pages/AddWallet';
 import Settings from './pages/Settings';
 import { NavigationContainer } from '@react-navigation/native';
-import { useTheme } from "@ui-kitten/components";
+import { ApplicationProvider, useTheme } from "@ui-kitten/components";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { PAGES, TAB_ICON_SIZE } from './utils/constants';
 import { configureStore } from '@reduxjs/toolkit'

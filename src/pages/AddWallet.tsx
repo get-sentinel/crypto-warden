@@ -17,10 +17,6 @@ import PageTitle from "../components/PageTitle";
 
 
 const AddWallet = React.memo(() => {
-    const isDarkMode = useColorScheme() === 'dark';
-    const backgroundStyle = {
-        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-    };
     const theme = useTheme();
     const dispatch = useDispatch()
     const navigation = useNavigation()
@@ -92,10 +88,6 @@ const AddWallet = React.memo(() => {
 
         <>
             <View style={{ flex: 1 }}>
-                <StatusBar
-                    barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                    backgroundColor={backgroundStyle.backgroundColor}
-                />
                 <View style={{
                     padding: DEFAULT_PADDING,
                     backgroundColor: theme['color-basic-500'],
