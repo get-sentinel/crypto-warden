@@ -11,6 +11,7 @@ import Firebase
 #if targetEnvironment(macCatalyst)
 import Dynamic
 import Cocoa
+import React
 #endif
 
 @UIApplicationMain

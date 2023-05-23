@@ -9,7 +9,7 @@
 #import "React/RCTBridgeModule.h"
 
 @interface RCT_EXTERN_MODULE(KeychainWrapper,NSObject)
-RCT_EXTERN__BLOCKING_SYNCHRONOUS_METHOD(getValueForKey: (NSString*)key withSync:(BOOL)synchronizable)
-RCT_EXTERN__BLOCKING_SYNCHRONOUS_METHOD(setValueForKey: (NSString*)tokens at:(NSString*)key withSync:(BOOL)synchronizable)
+RCT_EXTERN__BLOCKING_SYNCHRONOUS_METHOD(getValueForKey: (NSString *)key withSync:(BOOL)synchronizable) nullable;
+RCT_EXTERN__BLOCKING_SYNCHRONOUS_METHOD(setValueForKey: (NSString *)tokens at:(NSString*)key withSync:(BOOL)synchronizable)
 
 @end

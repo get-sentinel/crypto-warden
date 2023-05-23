@@ -18,6 +18,7 @@ import BLUE_IMAGE from '../assets/walletIcons/blue.png'
 import ATOMIC_IMAGE from '../assets/walletIcons/atomic.png'
 import XDEFI_IMAGE from '../assets/walletIcons/xdefi.png'
 import APP_ICON_IMAGE from '../assets/app-icon.png'
+import { Platform } from 'react-native'
 
 export const APP_STORE_IOS_ID = "1663191731"
 
@@ -31,11 +32,33 @@ export const PAGES = {
     "SETTINGS": "settings",
     "FAQ": "faq",
     "ONBOARDING": "onboarding",
-    "PAYWALL": "paywall"
+    "PAYWALL": "paywall",
+    "SECURITY_CONFIG": "securityConfig"
 }
 
-export const KEYCHAIN_PATHS = {
+export const SECURITY_OPTIONS = {
+    "ICLOUD": "iCloud",
+    "SENTINEL": "sentinel",
+    "E_STORAGE": "encryptedStorage"
+}
+
+export const KEYCHAIN_KEY = {
+    "WALLETS": "wallets",
+}
+export const SENTINEL_CLOUD_KEY = {
     "WALLETS": "wallets"
+}
+export const E_STORAGE_KEY = {
+    "WALLETS": "com.sentinel.cryptowarden.wallets"
+}
+
+export const LOCAL_STORAGE_KEYS = {
+    "PASSWORD": Platform.OS === 'android' ? "com.sentinel.cryptowarden.password" : "password",
+    "SECURITY_OPTION": Platform.OS === 'android' ? "com.sentinel.cryptowarden.securityOption" : "securityOption"
+}
+
+export const COLLECTION = {
+    "DATA": "data"
 }
 
 export const DEFAULT_PADDING = 24
@@ -59,7 +82,7 @@ export const WALLET_PROVIDERS = [
         "id": -1,
         "name": "Crypto Wallet",
         "imagePath": APP_ICON_IMAGE
-    },{
+    }, {
         "id": 0,
         "name": "Metamask",
         "imagePath": METAMASK_IMAGE

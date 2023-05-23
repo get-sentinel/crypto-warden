@@ -22,19 +22,21 @@ import WalletCell from '../components/cells/WalletCell';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedWallet } from '../redux/WalletSlice';
 import { useNavigation } from '@react-navigation/native';
-import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_PADDING, PAGES, TOAST_POSITION, TOP_NAV_TITLE_SIZE, TOP_NAV_TITLE_WEIGHT } from '../utils/constants';
-import { fetchWallets } from '../storage/KeychainManager';
+import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_PADDING, LOCAL_STORAGE_KEYS, PAGES, SECURITY_OPTIONS, TOAST_POSITION, TOP_NAV_TITLE_SIZE, TOP_NAV_TITLE_WEIGHT } from '../utils/constants';
+// import { fetchWallets } from '../storage/KeychainManager';
 import { RefreshControl } from 'react-native-gesture-handler';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
 import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png'
 import Purchases from 'react-native-purchases';
 import { Platform } from 'react-native';
-import { setAuthenticated, setPremium, setSentinelPremium, setUID } from '../redux/AccountSlice';
+import { setAuthenticated, setPassword, setPremium, setSecurityOption, setSentinelPremium, setUID } from '../redux/AccountSlice';
 import auth from '@react-native-firebase/auth';
 import { checkPremium } from '../iap/PurchaseIAP';
 import Toast from 'react-native-toast-message';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import { KEYCHAIN_PATHS } from '../utils/constants';
+import { KEYCHAIN_KEY } from '../utils/constants';
+import { decryptData, encryptData, generateKey } from '../storage/EncryptionManager';
+import { getFromLocalStorage, getWalletsAndDispatch } from '../storage/StorageManager';
 
 const revenueCatConfig = require('../revenueCatConfig/revenueCatConfig.json')
 
@@ -43,6 +45,8 @@ const Home = () => {
     const isDarkMode = useColorScheme() === 'dark';
     const wallets = useSelector((state: any) => state.walletSlice.wallets);
     const premium = useSelector((state: any) => state.accountSlice.premium);
+    const uid = useSelector((state: any) => state.accountSlice.uid);
+    const securityOption = useSelector((state: any) => state.accountSlice.securityOption);
     const [sortedWallets, setSortedWallets] = useState<Wallet[]>([]);
     const dispatch = useDispatch()
     const navigation = useNavigation<any>();
@@ -53,7 +57,6 @@ const Home = () => {
     let emitter = new NativeEventEmitter(NativeModules.EventEmitter)
 
     useEffect(() => {
-
         const connectRevenueCat = async () => {
 
             try {
@@ -90,6 +93,20 @@ const Home = () => {
 
         const unsubscribe = subscribeFirebase()
 
+        const loadConfigs = async () => {
+            const securityOption = await getFromLocalStorage({ key: LOCAL_STORAGE_KEYS.SECURITY_OPTION })
+            dispatch(setSecurityOption(securityOption))
+
+            const password = await getFromLocalStorage({ key: LOCAL_STORAGE_KEYS.PASSWORD })
+            if (password) {
+                dispatch(setPassword(password))
+            }
+
+        }
+
+        loadConfigs()
+            .catch((e) => console.log(e))
+
         return () => {
             unsubscribe()
             urlListener.remove()
@@ -118,9 +135,10 @@ const Home = () => {
     }, [sorting, wallets])
 
     useEffect(() => {
-        fetchWallets({ dispatch: dispatch, synchronizable: premium })
-    }, [premium])
-
+        if (securityOption) {
+            getWalletsAndDispatch({ dispatch: dispatch, securityOption: securityOption, uid: uid })
+        }
+    }, [securityOption])
 
     const backgroundStyle = {
         backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -139,11 +157,9 @@ const Home = () => {
 
     const refreshWallets = () => {
         setIsRefreshing(true)
-        fetchWallets({ dispatch: dispatch, synchronizable: premium })
+        getWalletsAndDispatch({ dispatch: dispatch, securityOption: securityOption, uid: uid, local: wallets })
         setIsRefreshing(false)
     }
-
-
 
     const addNewWallet = () => {
         if (premium || wallets.length < 1) {
@@ -154,7 +170,7 @@ const Home = () => {
     }
 
     const syncData = () => {
-        fetchWallets({ dispatch: dispatch, synchronizable: premium })
+        getWalletsAndDispatch({ dispatch: dispatch, securityOption: securityOption, uid: uid, local: wallets })
 
         if (!premium) {
             Toast.show({
@@ -264,7 +280,7 @@ const Home = () => {
                             />
                             : <View style={{ display: 'flex', flex: 1, width: '100%', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column' }}>
                                 <Image source={DEFAULT_IMAGE} style={{ width: '100%', maxHeight: '50%', overflow: 'visible' }} />
-                                <Text style={{ fontSize: 16, textAlign: 'center', color:theme['text-basic-color'] }}>{"Crypto Warden keeps your seed/recovery phrases secured in your iCloud Keychain.\nYou only can access them, by design.\n\nAh, and it's open-source."}</Text>
+                                <Text style={{ fontSize: 16, textAlign: 'center', color: theme['text-basic-color'] }}>{"Crypto Warden keeps your seed/recovery phrases secured in your iCloud Keychain.\nYou only can access them, by design.\n\nAh, and it's open-source."}</Text>
                                 <Button style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', width: '90%', backgroundColor: theme['background-color-button'], borderRadius: DEFAULT_CORNER_RADIUS, marginTop: 0, borderWidth: 0 }}
                                     onPress={() => {
                                         syncData()
@@ -299,7 +315,7 @@ const Home = () => {
                                 <MaterialCommunityIcons
                                     size={25} name='shield-alert' color={theme['color-primary-500']}
                                 />
-                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color:theme['text-basic-color'] }}>Without syncing you may lose your data if anything happens to this device. Click to enable. </Text>
+                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color: theme['text-basic-color'] }}>Without syncing you may lose your data if anything happens to this device. Click to enable. </Text>
                             </View>
                         </TouchableOpacity>
                         : undefined

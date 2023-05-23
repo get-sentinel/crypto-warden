@@ -8,7 +8,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useDispatch, useSelector } from 'react-redux';
 import PageTitle from '../components/PageTitle';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
-import { APP_STORE_IOS_ID, BUTTON_FONT_SIZE, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, DEFAULT_TEXT_SIZE, PAGES, TOAST_POSITION } from '../utils/constants';
+import { APP_STORE_IOS_ID, BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, DEFAULT_TEXT_SIZE, PAGES, TOAST_POSITION } from '../utils/constants';
 import { openURL } from '../utils/utils';
 import DeviceInfo from 'react-native-device-info';
 import AUTHENTICATOR_ICON from '../assets/authenticator.jpg'
@@ -67,29 +67,11 @@ const Settings = () => {
     }
 
     const purchasePremium = () => {
-
-        if (!premium) {
-            navigation.navigate(PAGES.PAYWALL)
-        } else {
-            Toast.show({
-                type: 'success',
-                position: TOAST_POSITION,
-                text1: "Already Activated 🎉",
-                text2: "Thanks for your support",
-                visibilityTime: 2000,
-                autoHide: true,
-                topOffset: 30,
-                bottomOffset: 40,
-                onShow: () => { },
-                onHide: () => { },
-                onPress: () => { },
-                props: { iconName: 'crown' }
-            })
-        }
+        navigation.navigate(PAGES.PAYWALL)
     }
 
     return (
-        <View style={{flex:1}}>
+        <View style={{ flex: 1 }}>
 
             <TopNavigation
                 style={{
@@ -129,7 +111,7 @@ const Settings = () => {
                     <TouchableOpacity style={styles().settingsItem}
                         onPress={() => rateApp()}>
                         <View style={styles().settingsTextAndIcon}>
-                            <View style={{...styles().iconBox, ...{backgroundColor:'rgb(249,222,82)'}}}>
+                            <View style={{ ...styles().iconBox, ...{ backgroundColor: 'rgb(249,222,82)' } }}>
                                 <MaterialCommunityIcons name="star" size={16} color={'#fff'} />
                             </View>
                             <Text style={styles().settingsText}>Love this app? Rate it 😊</Text>
@@ -191,6 +173,16 @@ const Settings = () => {
                             style={{ width: '50%', textAlign: 'right', color: theme['text-basic-color'] }}>{uid ? uid : 'N/A'}</Text>
                     </TouchableOpacity>
 
+                    <Divider style={styles().divider} />
+
+                    <SettingsCell
+                        headingIcon='security'
+                        trailingIcon='arrow-ios-forward'
+                        text='Security Config'
+                        iconBackgroundColor='rgb(80, 140, 96)'
+                        onPress={() => navigation.navigate(PAGES.SECURITY_CONFIG)}
+                    />
+
                 </View>
 
                 <View style={styles().settingsBox}>
@@ -216,13 +208,15 @@ const Settings = () => {
                     <Divider style={styles().divider} />
 
                     <SettingsCell
-                        headingIcon='security'
+                        headingIcon='police-badge'
                         trailingIcon='diagonal-arrow-right-up-outline'
-                        text='Security Model'
+                        text='Read our Security Model'
                         iconBackgroundColor='rgb(84, 190, 255)'
                         onPress={() => openURL('https://getsentinel.io/security-model?ref=app')}
                     />
                 </View>
+
+                <Text style={{ fontSize: 13, fontWeight: '600', marginLeft: DEFAULT_3x_MARGIN, marginBottom: DEFAULT_1x_MARGIN }}>{"Other apps from Sentinel"}</Text>
 
                 <View style={styles().settingsBox}>
 
@@ -232,7 +226,7 @@ const Settings = () => {
                             <View style={{ marginRight: 10 }}>
                                 <Image source={AUTHENTICATOR_ICON} style={{ width: 26, height: 26, borderRadius: 5 }} />
                             </View>
-                            <Text style={styles().settingsText}>Try our 2FA Authenticator app</Text>
+                            <Text style={styles().settingsText}>Secure 2FA Authenticator</Text>
                         </View>
                         <Icon name='diagonal-arrow-right-up-outline' fill={theme['text-basic-color']} style={styles().settingsItemIcon} />
                     </TouchableOpacity>
@@ -382,7 +376,7 @@ const Settings = () => {
                         justifyContent: 'space-between',
                         paddingBottom: 0,
                         paddingHorizontal: DEFAULT_2x_MARGIN,
-                        width:'100%'
+                        width: '100%'
                     }}
                 >
                     <MaterialCommunityIcons style={{ marginTop: 10, marginBottom: 10, alignSelf: 'center' }} name="apple" size={70} color={theme['text-basic-color']} />

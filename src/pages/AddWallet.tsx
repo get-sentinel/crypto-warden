@@ -32,6 +32,8 @@ const AddWallet = React.memo(() => {
     const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType>(WALLET_PROVIDERS[0].imagePath);
     const wallets = useSelector((state: any) => state.walletSlice.wallets);
     const premium = useSelector((state: any) => state.accountSlice.premium);
+    const uid = useSelector((state: any) => state.accountSlice.uid);
+    const securityOption = useSelector((state: any) => state.accountSlice.securityOption);
     const [walleteProviderSelectionModalVisible, setWalleteProviderSelectionModalVisible] = useState(false)
     const [checkSeedStatus, setCheckSeedStatus] = useState(0)
 
@@ -39,7 +41,7 @@ const AddWallet = React.memo(() => {
         let wp = WALLET_PROVIDERS.filter(w => w.id === provider)
         setWalletProviderImagePath(wp.length > 0 ? wp[0].imagePath : WALLET_PROVIDERS[0].imagePath)
     }
-    
+
     const selectProvider = (provider: number | undefined) => {
         setWalletProvider(provider ?? 0)
         selectProviderImagePath(provider ?? 0)
@@ -77,7 +79,7 @@ const AddWallet = React.memo(() => {
             updateDate: new Date()
         })
 
-        dispatch(addNewWallet({ newWallet: newWallet, synchronizable: premium }))
+        dispatch(addNewWallet({ newWallet: newWallet, securityOption: securityOption, uid: uid }))
         navigation.goBack()
     }
 

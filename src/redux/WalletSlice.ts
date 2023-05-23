@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import Wallet from '../class/Wallet'
-import { setWalletsToKeychain } from '../storage/KeychainManager'
+import { saveWallets } from '../storage/StorageManager'
 
 const walletSlice = createSlice({
     name: 'wallets',
@@ -15,7 +15,7 @@ const walletSlice = createSlice({
             let newWallet: Wallet[] = [action.payload.newWallet]
             walletList = walletList.concat(newWallet)
             state.wallets = walletList
-            setWalletsToKeychain(walletList, action.payload.synchronizable)
+            saveWallets({ local: walletList, securityOption: action.payload.securityOption, uid: action.payload.uid })
         },
         loadWallets: (state, action) => {
             state.wallets = action.payload
@@ -28,7 +28,7 @@ const walletSlice = createSlice({
             let updatedWallet: Wallet = action.payload.updatedWallet
 
             // Find the index of object from array that you want to update
-            const wIndex = walletList.findIndex((w:Wallet) => w.seed === updatedWallet.seed);
+            const wIndex = walletList.findIndex((w: Wallet) => w.seed === updatedWallet.seed);
 
             // Make sure to avoid incorrect replacement
             // When specific item is not found
@@ -44,7 +44,7 @@ const walletSlice = createSlice({
             ];
 
             state.wallets = updatedWallets
-            setWalletsToKeychain(updatedWallets, action.payload.synchronizable)
+            saveWallets({ local: updatedWallets, securityOption: action.payload.securityOption, uid: action.payload.uid })
         }
     }
 })

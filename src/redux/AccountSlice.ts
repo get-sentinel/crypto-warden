@@ -1,4 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { Platform } from 'react-native'
+import { SECURITY_OPTIONS } from '../utils/constants'
 
 const accountSlice = createSlice({
     name: 'wallets',
@@ -6,7 +8,9 @@ const accountSlice = createSlice({
         premium: false,
         authenticated: false,
         uid: undefined,
-        sentinelPremium: false
+        sentinelPremium: false,
+        securityOption: undefined as string | undefined,
+        password: undefined
     },
     reducers: {
         setPremium: (state, action) => {
@@ -21,8 +25,18 @@ const accountSlice = createSlice({
         setSentinelPremium: (state, action) => {
             state.sentinelPremium = action.payload
         },
+        setSecurityOption: (state, action) => {
+            var securityOption = action.payload
+            if (!securityOption) {
+                securityOption = Platform.OS === 'android' ? SECURITY_OPTIONS.E_STORAGE : SECURITY_OPTIONS.ICLOUD
+            }
+            state.securityOption = securityOption
+        },
+        setPassword: (state, action) => {
+            state.password = action.payload
+        },
     }
 })
 
-export const { setPremium, setAuthenticated, setUID, setSentinelPremium } = accountSlice.actions
+export const { setPremium, setAuthenticated, setUID, setSentinelPremium, setSecurityOption, setPassword } = accountSlice.actions
 export default accountSlice.reducer

@@ -15,18 +15,18 @@ import KeychainAccess
   
   let keychain = Keychain(service: Constants.keychainID)
   
-  @objc func getValueForKey(_ key:String, withSync synchronizable:Bool) -> String {
+  @objc func getValueForKey(_ key:String, withSync synchronizable:Bool) -> String? {
     let keychain = self.keychain.synchronizable(synchronizable)
     
-    var value:String
+    var value: String?
     
     do {
-      value = try keychain.getString(key) ?? "[]"
-      return value
-    } catch let e {
-      print(e)
-      return "[]"
+      value = try keychain.getString(key)
+    } catch let error {
+      print(error)
     }
+    
+    return value
   }
   
   @objc func setValueForKey(_ value:String, at key:String, withSync synchronizable:Bool) -> NSNumber {
@@ -34,10 +34,10 @@ import KeychainAccess
     
     do {
       try keychain.set(value, key: key)
-      return 0
+      return 1
     } catch let e {
       print(e)
-      return 1
+      return 0
     }
   } 
   

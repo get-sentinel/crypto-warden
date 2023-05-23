@@ -19,7 +19,7 @@
   "color-basic-900": "#050710",
   "color-basic-950": "#444",
   "icon-basic-color": "#3B3B3B",
-  "icon-inactive-color": "rgb(68, 68, 68,0.7)",
+  "icon-inactive-color": "$secondary-text",
   "icon-inactive-color-handset": "rgb(68, 68, 68,0.7)",
   "text-basic-color": "#16181E",
   "text-primary-color": "#3B3B3B",

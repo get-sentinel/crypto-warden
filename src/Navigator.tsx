@@ -27,6 +27,7 @@ import Paywall from './pages/Paywall';
 import Toast from 'react-native-toast-message';
 import { getToastConfig } from './config/ToastConfig';
 import { createStackNavigator } from '@react-navigation/stack';
+import SecurityConfig from './pages/SecurityConfig';
 
 const Navigator = () => {
 
@@ -68,6 +69,12 @@ const Navigator = () => {
                     key={PAGES.PAYWALL}
                     name={PAGES.PAYWALL}
                     component={Paywall}
+                    options={{ headerShown: false, presentation: 'modal' }}
+                />
+                <Stack.Screen
+                    key={PAGES.SECURITY_CONFIG}
+                    name={PAGES.SECURITY_CONFIG}
+                    component={SecurityConfig}
                     options={{ headerShown: false, presentation: 'modal' }}
                 />
             </Stack.Navigator>
