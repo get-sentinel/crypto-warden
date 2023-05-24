@@ -271,7 +271,7 @@ const Home = () => {
                                     paddingHorizontal: DEFAULT_2x_MARGIN
                                 }}>
                                 <MaterialCommunityIcons
-                                    size={25} name='weather-night' color={theme['color-primary-500']}
+                                    size={25} name='compare' color={'rgb(0,0,0)'}
                                 />
                                 <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color: theme['text-basic-color'] }}>Get a beatiful Dark Mode.</Text>
                             </View>

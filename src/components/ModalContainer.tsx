@@ -38,14 +38,14 @@ const ModalContainer = (props: any) => {
                         borderTopColor: theme['shadow-color'], backgroundColor: theme['color-basic-600']
                     }
                 }}>
-                    <Button style={globalStyles(theme).cancelButton}
+                    <Button style={globalStyles().cancelButton}
                         onPress={() => navigation.goBack()}>
                         {props => <Text {...props} style={{
                             color: theme['text-basic-color'], textAlign: 'center', fontWeight: '600',
                         }}>{`Cancel`}</Text>
                         }
                     </Button>
-                    <Button style={globalStyles(theme).primaryButton}
+                    <Button style={globalStyles().primaryButton}
                         onPress={() => props.actionButtonMethod()}>
                         {
                             p => <Text {...p} style={{

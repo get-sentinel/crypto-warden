@@ -23,10 +23,6 @@ const SecurityCell = ({ title, description, selected, sync, alert, securityOptio
 
     }, [selected])
 
-    const updatePassword = () => {
-
-    }
-
     return (
         <View style={{
             paddingHorizontal: DEFAULT_1x_MARGIN,
@@ -97,7 +93,7 @@ const SecurityCell = ({ title, description, selected, sync, alert, securityOptio
                             onChangeText={(nextValue: string) => setNewPassword?.(nextValue)}
                             accessoryRight={() => <TouchableOpacity onPress={() => setIsPasswordVisible(!isPassowordVisible)}>
                                 <MaterialCommunityIcons size={20}
-                                    color={theme['text-primary-color-button']}
+                                    color={theme['text-basic-color']}
                                     name={isPassowordVisible ? 'eye' : 'eye-off'} />
                             </TouchableOpacity>
                             }

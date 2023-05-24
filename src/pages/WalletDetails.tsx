@@ -17,6 +17,7 @@ import { Colors } from "react-native/Libraries/NewAppScreen";
 import { ImageSource } from "react-native-vector-icons/Icon";
 import PageTitle from "../components/PageTitle";
 import { analyzeSeed } from "../utils/utils";
+import { globalStyles } from "../utils/globalStyles";
 
 const WalletDetails = React.memo(() => {
     const theme = useTheme();
@@ -144,19 +145,19 @@ const WalletDetails = React.memo(() => {
                         {
                             editMode
                                 ? <TouchableOpacity
-                                    style={{ flexDirection: 'row', alignItems: 'center', }}
+                                    style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
                                     onPress={() => {
                                         setEditMode(false)
                                         update()
                                     }}>
-                                    <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'content-save-outline'} size={27} color={theme['text-basic-color']} />
-                                    <Text style={{ fontWeight: '500', fontSize: 16 }}>Save</Text>
+                                    <MaterialCommunityIcons name={'check'} size={20} color={theme['text-primary-color-button']} />
                                 </TouchableOpacity>
                                 : <TouchableOpacity
-                                    style={{ flexDirection: 'row', alignItems: 'center' }}
-                                    onPress={() => setEditMode(true)}>
-                                    <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'square-edit-outline'} size={27} color={theme['text-basic-color']} />
-                                    <Text style={{ fontWeight: '500', fontSize: 16 }}>Edit</Text>
+                                    style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
+                                    onPress={() => {
+                                        setEditMode(true)
+                                    }}>
+                                    <MaterialCommunityIcons name={'square-edit-outline'} size={20} color={theme['text-primary-color-button']} />
                                 </TouchableOpacity>
                         }
                     </View>
@@ -197,7 +198,7 @@ const WalletDetails = React.memo(() => {
                                         style={{ borderWidth: 0, paddingHorizontal: 0, paddingVertical: 0, marginVertical: 0, backgroundColor: theme['color-basic-600'], flex: 1 }}
                                         accessoryRight={() => <TouchableOpacity onPress={() => setWalletName('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>}
                                         onChangeText={(nextValue: string) => setWalletName(nextValue)}
@@ -244,7 +245,7 @@ const WalletDetails = React.memo(() => {
                                         onChangeText={(nextValue: string) => setWalletAddress(nextValue)}
                                         accessoryRight={() => <TouchableOpacity onPress={() => setWalletAddress('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>}
                                     />
@@ -280,7 +281,7 @@ const WalletDetails = React.memo(() => {
                                         onChangeText={(nextValue: string) => setWalletPassword(nextValue)}
                                         accessoryRight={() => <TouchableOpacity onPress={() => setWalletPassword('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>}
                                     />
@@ -315,7 +316,7 @@ const WalletDetails = React.memo(() => {
                     {
                         editMode ?
                             <Button
-                                style={{ width: '50%', alignSelf: 'center', marginTop: DEFAULT_3x_MARGIN, borderRadius: DEFAULT_CORNER_RADIUS, borderColor: theme['delete-button-background'], borderWidth: 1, backgroundColor: theme['delete-button-background'], marginBottom:DEFAULT_3x_MARGIN }}
+                                style={{ width: '50%', alignSelf: 'center', marginTop: DEFAULT_3x_MARGIN, borderRadius: DEFAULT_CORNER_RADIUS, borderColor: theme['delete-button-background'], borderWidth: 1, backgroundColor: theme['delete-button-background'], marginBottom: DEFAULT_3x_MARGIN }}
                                 onPress={() => setDeletionModalVisible(true)}>
                                 {props => <Text {...props} style={{ color: theme['delete-button-text'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 3 }}>
                                     {`Delete Wallet`}

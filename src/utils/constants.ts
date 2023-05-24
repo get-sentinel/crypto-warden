@@ -42,6 +42,16 @@ export const SECURITY_OPTIONS = {
     "E_STORAGE": "encryptedStorage"
 }
 
+interface SecurityOptionDisplayNames {
+    [key: string]: string;
+}
+  
+export const SECURITY_OPTION_DISPLAY_NAMES: SecurityOptionDisplayNames = {
+    "iCloud": "iCloud Keychain",
+    "sentinel": "Sentinel Cloud",
+    "encryptedStorage": "Encrypted Storage"
+}
+
 export const KEYCHAIN_KEY = {
     "WALLETS": "wallets",
 }

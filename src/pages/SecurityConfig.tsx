@@ -32,7 +32,7 @@ const SecurityConfig = React.memo(() => {
     const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
     const [isMigrationCompleted, setIsMigrationCompleted] = useState(false);
     const [deleteOrigin, setDeleteOrigin] = useState(false);
-    const [statusMessage, setStatusMessage] = useState('');
+    const [statusMessage, setStatusMessage] = useState<string[]>([]);
     const navigation = useNavigation()
 
     useEffect(() => {
@@ -60,6 +60,7 @@ const SecurityConfig = React.memo(() => {
             newPassword: newPassword,
             oldPassword: password,
             uid: uid,
+            statusMessage: statusMessage,
             setStatusMessage: setStatusMessage,
             deleteOrigin: deleteOrigin,
             dispatch: dispatch
@@ -83,7 +84,7 @@ const SecurityConfig = React.memo(() => {
         setConfirmationModalVisible(false)
         setIsMigrationCompleted(false)
         setDeleteOrigin(false)
-        setStatusMessage('')
+        setStatusMessage([])
         setHasChanged(false)
     }
 
@@ -233,12 +234,14 @@ const SecurityConfig = React.memo(() => {
 
                     <Divider style={styles().divider} />
 
-                    <Text style={styles().infoText}>{statusMessage}</Text>
+                    {
+                        statusMessage.map(message => <Text key={message} style={styles().infoText}>{message}</Text>)
+                    }
 
                     {
                         isMigrationCompleted
                             ? <View style={styles().actionButtonContainer}>
-                                <Button style={{ ...globalStyles(theme).primaryButton, ...{ width: '100%' } }}
+                                <Button style={{ ...globalStyles().primaryButton, ...{ width: '100%' } }}
                                     onPress={() => resetState()}>
                                     {
                                         p => <Text {...p} style={{
@@ -248,14 +251,14 @@ const SecurityConfig = React.memo(() => {
                                 </Button>
                             </View>
                             : <View style={styles().actionButtonContainer}>
-                                <Button style={globalStyles(theme).cancelButton}
+                                <Button style={globalStyles().cancelButton}
                                     onPress={() => resetState()}>
                                     {props => <Text {...props} style={{
                                         color: theme['text-basic-color'], textAlign: 'center', fontWeight: '600',
                                     }}>{`Cancel`}</Text>
                                     }
                                 </Button>
-                                <Button style={globalStyles(theme).primaryButton}
+                                <Button style={globalStyles().primaryButton}
                                     onPress={() => confirmUpdate()}>
                                     {
                                         p => <Text {...p} style={{
@@ -346,6 +349,7 @@ const styles = () => {
             alignItems: 'center',
             width: '100%',
             paddingBottom: isSmallScreen() ? 15 : 50,
+            marginTop: DEFAULT_2x_MARGIN,
         },
         infoBox: {
             flexDirection: 'row',
@@ -359,7 +363,7 @@ const styles = () => {
             fontSize: 14,
             textAlign: 'left',
             flexShrink: 1,
-            // marginTop: DEFAULT_1x_MARGIN
+            marginTop: DEFAULT_1x_MARGIN
         }
     })
 }

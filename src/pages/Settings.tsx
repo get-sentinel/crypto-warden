@@ -184,13 +184,15 @@ const Settings = () => {
                             style={{ width: '50%', textAlign: 'right', color: theme['text-basic-color'] }}>{uid ? uid : 'N/A'}</Text>
                     </TouchableOpacity>
 
-                    <Divider style={styles().divider} />
+                </View>
+
+                <View style={styles().settingsBox}>
 
                     <SettingsCell
                         headingIcon='security'
                         trailingIcon='arrow-ios-forward'
                         text='Security Config'
-                        iconBackgroundColor='rgb(80, 140, 96)'
+                        iconBackgroundColor='rgb(116, 171, 131)'
                         onPress={() => navigation.navigate(PAGES.SECURITY_CONFIG)}
                     />
 

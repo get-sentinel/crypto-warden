@@ -14,6 +14,7 @@ import { Colors } from "react-native/Libraries/NewAppScreen";
 import { analyzeSeed, getMaxNumberFromArray } from "../utils/utils";
 import { addNewWallet } from "../redux/WalletSlice";
 import PageTitle from "../components/PageTitle";
+import { globalStyles } from "../utils/globalStyles";
 
 
 const AddWallet = React.memo(() => {
@@ -98,12 +99,9 @@ const AddWallet = React.memo(() => {
                         <PageTitle title='New Wallet' />
 
                         <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center' }}
-                            onPress={() => {
-                                saveNewWallet()
-                            }}>
-                            <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'content-save-outline'} size={27} color={theme['text-basic-color']} />
-                            <Text style={{ fontWeight: '500', fontSize: 16, color: theme['text-basic-color'] }}>Save</Text>
+                            style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
+                            onPress={() => saveNewWallet()}>
+                            <MaterialCommunityIcons name={'check'} size={20} color={theme['text-primary-color-button']} />
                         </TouchableOpacity>
                     </View>
 
@@ -142,7 +140,7 @@ const AddWallet = React.memo(() => {
                                     return walletName
                                         ? <TouchableOpacity onPress={() => setWalletName('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>
                                         : <View />
@@ -166,7 +164,7 @@ const AddWallet = React.memo(() => {
                                     return walletSeedPhrase
                                         ? <TouchableOpacity onPress={() => setWalletSeedPhrase('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>
                                         : <View />
@@ -189,7 +187,7 @@ const AddWallet = React.memo(() => {
                                     return walletAddress
                                         ? <TouchableOpacity onPress={() => setWalletAddress('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>
                                         : <View />
@@ -212,7 +210,7 @@ const AddWallet = React.memo(() => {
                                     return walletPassword
                                         ? <TouchableOpacity onPress={() => setWalletPassword('')}>
                                             <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
+                                                color={theme['unselected-icon-color']}
                                                 name='window-close' />
                                         </TouchableOpacity>
                                         : <View />

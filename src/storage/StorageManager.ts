@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import Wallet from "../class/Wallet";
-import { E_STORAGE_KEY, KEYCHAIN_KEY, LOCAL_STORAGE_KEYS, SECURITY_OPTIONS, SENTINEL_CLOUD_KEY } from "../utils/constants";
+import { E_STORAGE_KEY, KEYCHAIN_KEY, LOCAL_STORAGE_KEYS, SECURITY_OPTIONS, SECURITY_OPTION_DISPLAY_NAMES, SENTINEL_CLOUD_KEY } from "../utils/constants";
 import * as EncryptedStorageManager from './EncryptedStorageManager'
 import * as KeychainManager from './KeychainManager';
 import * as FirestoreManager from '../firebase/firestore';
@@ -131,9 +131,9 @@ export const getWalletsAndDispatch = async ({ dispatch, local = [], securityOpti
     dispatch(loadWallets(remote));
 }
 
-export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurityOption, newPassword, oldPassword, uid, setStatusMessage, deleteOrigin, dispatch }: { local: Wallet[], oldSecurityOption: string, newSecurityOption: string, newPassword: string, oldPassword: string, uid: string, dispatch:Dispatch<any>, setStatusMessage: (message: string) => void, deleteOrigin: boolean }) => {
+export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurityOption, newPassword, oldPassword, uid, statusMessage, setStatusMessage, deleteOrigin, dispatch }: { local: Wallet[], oldSecurityOption: string, newSecurityOption: string, newPassword: string, oldPassword: string, uid: string, dispatch: Dispatch<any>, statusMessage: string[], setStatusMessage: (messageList: string[]) => void, deleteOrigin: boolean }) => {
 
-    var statusMessage = 'Migration started...\n\n'
+    statusMessage.push('Migration started...')
     setStatusMessage(statusMessage)
     var success = false
 
@@ -141,12 +141,12 @@ export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurit
 
     // Get data from remote to avoid losing data
     let remote = await getDataFromRemote({ securityOption: newSecurityOption, uid: uid, password: password })
-    statusMessage = statusMessage + "Data fetched from remote, found " + remote.length + " wallets ✅\n\n"
+    statusMessage.push(`✅ Data fetched from ${SECURITY_OPTION_DISPLAY_NAMES[oldSecurityOption]}, found ` + remote.length + " wallets")
     setStatusMessage(statusMessage)
 
     // Merge with local data
     let mergedWallets = mergeWallets(local, remote);
-    statusMessage = statusMessage + "Merged with local data, total " + mergedWallets.length + " wallets ✅\n\n"
+    statusMessage.push("✅ Merged with local data, total " + mergedWallets.length + " wallets")
     setStatusMessage(statusMessage)
 
     // Stringify before storing to new location
@@ -156,11 +156,11 @@ export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurit
         // Update password locally
         success = await setToLocalStorage({ key: LOCAL_STORAGE_KEYS.PASSWORD, value: newPassword })
         if (success) {
-            statusMessage = statusMessage + "Stored new password locally ✅\n\n"
+            statusMessage.push("✅ Stored new password locally")
             setStatusMessage(statusMessage)
-            dispatch(setPassword(password))
+            dispatch(setPassword(newPassword))
         } else {
-            statusMessage = statusMessage + "Could not store new password locally, iterrupting ❌\n\n"
+            statusMessage.push("❌ Could not store new password locally, iterrupting")
             setStatusMessage(statusMessage)
             return
         }
@@ -170,10 +170,10 @@ export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurit
     success = await setDataToRemote({ securityOption: newSecurityOption, uid: uid, value: value })
 
     if (success) {
-        statusMessage = statusMessage + "Saved data to new location ✅\n\n"
+        statusMessage.push(`✅ Saved data to ${SECURITY_OPTION_DISPLAY_NAMES[newSecurityOption]}`)
         setStatusMessage(statusMessage)
     } else {
-        statusMessage = statusMessage + "Error while storing to new location, iterrupting ❌\n\n"
+        statusMessage.push(`❌ Error while storing to ${SECURITY_OPTION_DISPLAY_NAMES[newSecurityOption]}, iterrupting`)
         setStatusMessage(statusMessage)
         return
     }
@@ -181,11 +181,11 @@ export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurit
     // Save security option to local storage
     success = await setToLocalStorage({ key: LOCAL_STORAGE_KEYS.SECURITY_OPTION, value: newSecurityOption })
     if (success) {
-        statusMessage = statusMessage + "Saved new Security Option ✅\n\n"
+        statusMessage.push(`✅ Saved ${SECURITY_OPTION_DISPLAY_NAMES[newSecurityOption]} as new Security Option`)
         setStatusMessage(statusMessage)
         dispatch(setSecurityOption(newSecurityOption))
     } else {
-        statusMessage = statusMessage + "Error while updating Security Option to new location, iterrupting ❌\n\n"
+        statusMessage.push(`❌ Error while updating Security Option to ${SECURITY_OPTION_DISPLAY_NAMES[newSecurityOption]}, iterrupting`)
         setStatusMessage(statusMessage)
         return
     }
@@ -195,10 +195,10 @@ export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurit
         success = await setDataToRemote({ securityOption: oldSecurityOption, uid: uid, value: '' })
 
         if (success) {
-            statusMessage = statusMessage + "Cleaned data from old location ✅\n\n"
+            statusMessage.push(`✅ Cleaned data from ${SECURITY_OPTION_DISPLAY_NAMES[oldSecurityOption]}`)
             setStatusMessage(statusMessage)
         } else {
-            statusMessage = statusMessage + "Error while cleaning data from old location, iterrupting ❌\n\n"
+            statusMessage.push(`❌ Error while cleaning data from ${SECURITY_OPTION_DISPLAY_NAMES[oldSecurityOption]}, iterrupting`)
             setStatusMessage(statusMessage)
             return
         }
