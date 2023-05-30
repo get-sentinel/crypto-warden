@@ -72,3 +72,4 @@ buck-out/
 /src/config/GoogleSignIn.json
 /android/app/google-services.json
 /android/app/release/*
+/android/app/src/main/assets/*
