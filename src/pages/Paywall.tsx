@@ -18,6 +18,7 @@ import PaywallCell from "../components/cells/PaywallCell";
 import PaywallFeatureCell from "../components/cells/PaywallFeatureCell";
 import ICON from '../assets/app-icon.png';
 import PageTitle from "../components/PageTitle";
+import ModalSafeArea from "../components/safeArea/ModalSafeArea";
 
 const Paywall = React.memo(() => {
 
@@ -68,20 +69,7 @@ const Paywall = React.memo(() => {
     );
 
     return (
-
-
-        <View
-            style={{
-                backgroundColor: theme['color-basic-500'],
-                borderColor: 'transparent',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                height: '100%',
-                paddingBottom: isSmallScreen() ? 15 : 50,
-                paddingTop: 15,
-                paddingHorizontal: DEFAULT_3x_MARGIN,
-            }}
-        >
+        <ModalSafeArea>
 
             {
                 isProcessingPurchase
@@ -113,7 +101,7 @@ const Paywall = React.memo(() => {
 
             <Image
                 source={ICON}
-                style={{ width: 100, height: 100, borderRadius: 10, alignSelf: 'center' }}
+                style={{ width: 100, height: 100, borderRadius: 20, alignSelf: 'center' }}
             />
 
             <Text style={{ fontSize: 16, fontWeight: '400', color: theme['text-basic-color'], textAlign:'center', marginTop:DEFAULT_3x_MARGIN }}>Purchase Crypto Warden Plus to enjoy a beautiful Dark Mode and support the Open Source Project.</Text>
@@ -138,14 +126,14 @@ const Paywall = React.memo(() => {
 
             </View>
 
-            <View style={{
+            {/* <View style={{
                 justifyContent: 'space-between',
                 paddingHorizontal: DEFAULT_1x_MARGIN,
                 marginTop: DEFAULT_3x_MARGIN,
                 width: '100%',
                 backgroundColor: theme['color-basic-600'],
                 borderRadius: DEFAULT_CORNER_RADIUS,
-            }}>
+            }}> */}
 
                 {/* <PaywallCell
                     paywallOption="One-Time"
@@ -155,7 +143,7 @@ const Paywall = React.memo(() => {
                     onPress={() => console.log()}
                 /> */}
 
-            </View>
+            {/* </View> */}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: DEFAULT_2x_MARGIN }}>
                 <Text style={{ color: theme['secondary-text'], fontSize: 12 }}>
@@ -196,7 +184,7 @@ const Paywall = React.memo(() => {
                 }
             </Button >
 
-        </View >
+            </ModalSafeArea>
     );
 });
 

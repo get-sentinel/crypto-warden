@@ -16,6 +16,7 @@ import RNModal from 'react-native-modal';
 import { globalStyles } from "../utils/globalStyles";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { switchSecureStorage } from "../storage/StorageManager";
+import ModalSafeArea from "../components/safeArea/ModalSafeArea";
 
 const SecurityConfig = React.memo(() => {
 
@@ -89,13 +90,7 @@ const SecurityConfig = React.memo(() => {
     }
 
     return (
-        <View style={{
-            flex: 1,
-            paddingLeft: DEFAULT_PADDING,
-            paddingRight: DEFAULT_PADDING,
-            backgroundColor: theme['color-basic-500'],
-            paddingBottom: isSmallScreen() ? 15 : 50,
-        }}>
+        <ModalSafeArea>
 
             <TopNavigation
                 style={{
@@ -169,7 +164,7 @@ const SecurityConfig = React.memo(() => {
                 disabled={getStatus().state === 0}
                 style={{ width: '100%', marginBottom: 0, marginTop: DEFAULT_1x_MARGIN, backgroundColor: getStatus().state === 1 ? theme['background-color-button'] : theme['color-basic-300'], borderWidth: 0, borderRadius: DEFAULT_CORNER_RADIUS, height: 50 }}
                 onPress={() => setConfirmationModalVisible(true)}>
-                {props => <Text {...props} style={{ color: getStatus().state === 1 ? theme['text-primary-color-button'] : theme["text-basic-color"], fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 3, padding: 0 }}>
+                {props => <Text {...props} style={{ color: getStatus().state === 1 ? theme['text-primary-color-button'] : theme["text-basic-color"], fontWeight: '600', fontSize: BUTTON_FONT_SIZE, padding: 0 }}>
                     {getStatus().message}
                 </Text>
                 }
@@ -271,7 +266,7 @@ const SecurityConfig = React.memo(() => {
                 </View>
 
             </RNModal >
-        </View >
+        </ModalSafeArea>
     );
 });
 

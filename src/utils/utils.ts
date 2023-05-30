@@ -37,7 +37,7 @@ export const openURL = (url: string) => {
         } else {
             console.log("Don't know how to open URI: " + url);
         }
-    });
+    }).catch(err => console.error('An error occurred', err));
 }
 
 export const getNextSorting = (sorting: number) => {

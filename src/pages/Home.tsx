@@ -26,7 +26,7 @@ import { BUTTON_FONT_SIZE, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARG
 // import { fetchWallets } from '../storage/KeychainManager';
 import { RefreshControl } from 'react-native-gesture-handler';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
-import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png'
+import DEFAULT_IMAGE from '../assets/providers.png'
 import Purchases from 'react-native-purchases';
 import { Platform } from 'react-native';
 import { setAuthenticated, setDarkMode, setPassword, setSecurityOption, setUID } from '../redux/AccountSlice';
@@ -62,7 +62,7 @@ const Home = () => {
                 if (Platform.OS === 'ios') {
                     await Purchases.configure({ apiKey: revenueCatConfig.apple_api_key });
                 } else if (Platform.OS === 'android') {
-                    // TODO
+                    await Purchases.configure({ apiKey: revenueCatConfig.google_api_key });
                 }
             }
             catch (e) {
@@ -75,6 +75,7 @@ const Home = () => {
 
         const subscribeFirebase = () => {
             return auth().onAuthStateChanged(async user => {
+                console.log(user)
                 if (user) {
                     dispatch(setAuthenticated(true))
                     dispatch(setUID(user.uid))
@@ -103,7 +104,6 @@ const Home = () => {
 
             const darkMode = await getFromLocalStorage({ key: LOCAL_STORAGE_KEYS.DARK_MODE })
             dispatch(setDarkMode(darkMode === 'true'))
-
         }
 
         loadConfigs()
@@ -163,124 +163,149 @@ const Home = () => {
         navigation.navigate(PAGES.ADD)
     }
 
-    const syncData = () => {
-        getWalletsAndDispatch({ dispatch: dispatch, securityOption: securityOption, uid: uid, local: wallets })
+    const syncData = async () => {
+        let remoteCount = await getWalletsAndDispatch({ dispatch: dispatch, securityOption: securityOption, uid: uid, local: wallets })
+        if (remoteCount === 0) {
+            Toast.show({
+                type: 'success',
+                position: TOAST_POSITION,
+                text1: 'No data found',
+                text2: 'Check your Security Config is correct',
+                visibilityTime: 2000,
+                autoHide: true,
+                topOffset: 30,
+                bottomOffset: 40,
+                onShow: () => { },
+                onHide: () => { },
+                onPress: () => { },
+                props: { iconName: 'database-off' }
+            })
+        }
     }
 
     return (
-        <>
-            <StableSafeArea>
+        <StableSafeArea>
 
-                <View style={{
-                    padding: DEFAULT_PADDING,
-                    backgroundColor: theme['color-basic-500'],
-                    flex: 1
-                }}>
+            <View style={{
+                padding: DEFAULT_PADDING,
+                backgroundColor: theme['color-basic-500'],
+                flex: 1
+            }}>
+
+                <View style={styles.toolbar}>
 
                     <View style={styles.toolbar}>
+                        <TouchableOpacity
+                            style={{ ...styles.actionButton, ...{ backgroundColor: 'transparent', marginRight: DEFAULT_1x_MARGIN } }}
+                            onPress={() => navigation.navigate(PAGES.SETTINGS)}>
+                            <MaterialCommunityIcons name={'account-cog-outline'} size={27} color={theme['unselected-icon-color']} />
+                        </TouchableOpacity>
 
-                        <View style={styles.toolbar}>
-                            <TouchableOpacity
-                                style={{ ...styles.actionButton, ...{ backgroundColor: 'transparent', marginRight: DEFAULT_1x_MARGIN } }}
-                                onPress={() => navigation.navigate(PAGES.SETTINGS)}>
-                                <MaterialCommunityIcons name={'account-cog-outline'} size={27} color={theme['unselected-icon-color']} />
-                            </TouchableOpacity>
-
-                        </View>
-
-                        <View style={styles.toolbar}>
-                            <TouchableOpacity
-                                style={{ ...styles.actionButton, ...{ backgroundColor: 'transparent', marginRight: DEFAULT_1x_MARGIN } }}
-                                onPress={() => setSorting(getNextSorting(sorting))}>
-                                <MaterialCommunityIcons name={sortingImage} size={27} color={theme['unselected-icon-color']} />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={{ ...styles.actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
-                                onPress={() => addNewWallet()}>
-                                <MaterialCommunityIcons name={'plus'} size={20} color={theme['text-primary-color-button']} />
-                            </TouchableOpacity>
-                        </View>
                     </View>
 
-                    <Text style={{
-                        fontWeight: TOP_NAV_TITLE_WEIGHT,
-                        fontSize: TOP_NAV_TITLE_SIZE,
-                        color: theme['icon-basic-color'],
-                        marginTop: DEFAULT_2x_MARGIN
-                    }}>
-                        {'Crypto Warden'}
-                    </Text>
+                    <View style={styles.toolbar}>
+                        <TouchableOpacity
+                            style={{ ...styles.actionButton, ...{ backgroundColor: 'transparent', marginRight: DEFAULT_1x_MARGIN } }}
+                            onPress={() => setSorting(getNextSorting(sorting))}>
+                            <MaterialCommunityIcons name={sortingImage} size={27} color={theme['unselected-icon-color']} />
+                        </TouchableOpacity>
 
-                    {
-                        sortedWallets.length > 0
-                            ? <FlatList
-                                data={sortedWallets}
-                                refreshControl={
-                                    <RefreshControl
-                                        refreshing={isRefreshing}
-                                        onRefresh={() => refreshWallets()}
-                                    />
-                                }
-                                contentContainerStyle={{
-                                    borderWidth: 1,
-                                    borderColor: theme['color-basic-300'],
-                                    borderRadius: 10,
-                                    overflow: 'hidden',
-                                    backgroundColor: theme['color-basic-600'],
-
-                                }}
-                                showsVerticalScrollIndicator={false}
-                                style={{ marginTop: DEFAULT_3x_MARGIN }}
-                                renderItem={renderItem}
-                                keyExtractor={item => item.seed}
-                                ItemSeparatorComponent={() => <Divider style={{ backgroundColor: theme['color-basic-300'], width: '85%', alignSelf: 'flex-end' }} />}
-                            />
-                            : <View style={{ display: 'flex', flex: 1, width: '100%', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column' }}>
-                                <Image source={DEFAULT_IMAGE} style={{ width: '100%', maxHeight: '50%', overflow: 'visible' }} />
-                                <Text style={{ fontSize: 16, textAlign: 'center', color: theme['text-basic-color'] }}>{"Crypto Warden keeps your seed/recovery phrases secured in your iCloud Keychain.\nYou only can access them, by design.\n\nAh, and it's open-source."}</Text>
-                                <Button style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', width: '90%', backgroundColor: theme['background-color-button'], borderRadius: DEFAULT_CORNER_RADIUS, marginTop: 0, borderWidth: 0 }}
-                                    onPress={() => {
-                                        syncData()
-                                    }}>
-                                    {props => <Text {...props} style={{ width: '80%', color: theme['text-primary-color-button'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 4 }}>{`Sync Wallets`}</Text>
-                                    }
-                                </Button>
-
-                            </View>
-                    }
+                        <TouchableOpacity
+                            style={{ ...styles.actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
+                            onPress={() => addNewWallet()}>
+                            <MaterialCommunityIcons name={'plus'} size={20} color={theme['text-primary-color-button']} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                {
-                    !premium
-                        ? <TouchableOpacity
-                            onPress={() => navigation.navigate(PAGES.PAYWALL)}
-                            style={{ width: '100%', marginTop: 10, marginBottom: 50 }}>
-                            <View
-                                style={{
-                                    marginHorizontal: DEFAULT_PADDING,
-                                    borderWidth: 1,
-                                    borderColor: theme['transparency-basic-color'],
-                                    borderRadius: 10,
-                                    overflow: 'hidden',
-                                    height: 50,
-                                    backgroundColor: theme['color-basic-600'],
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    paddingHorizontal: DEFAULT_2x_MARGIN
-                                }}>
-                                <MaterialCommunityIcons
-                                    size={25} name='compare' color={'rgb(0,0,0)'}
-                                />
-                                <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color: theme['text-basic-color'] }}>Get a beatiful Dark Mode.</Text>
-                            </View>
-                        </TouchableOpacity>
-                        : undefined
-                }
-            </StableSafeArea>
+                <Text style={{
+                    fontWeight: TOP_NAV_TITLE_WEIGHT,
+                    fontSize: TOP_NAV_TITLE_SIZE,
+                    color: theme['icon-basic-color'],
+                    marginTop: DEFAULT_2x_MARGIN
+                }}>
+                    {'Crypto Warden'}
+                </Text>
 
-        </>
+                {
+                    sortedWallets.length !== 0
+                        ? <FlatList
+                            data={sortedWallets}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={isRefreshing}
+                                    onRefresh={() => refreshWallets()}
+                                />
+                            }
+                            contentContainerStyle={{
+                                borderWidth: 1,
+                                borderColor: theme['color-basic-300'],
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                                backgroundColor: theme['color-basic-600'],
+
+                            }}
+                            showsVerticalScrollIndicator={false}
+                            style={{ marginTop: DEFAULT_3x_MARGIN }}
+                            renderItem={renderItem}
+                            keyExtractor={item => item.seed}
+                            ItemSeparatorComponent={() => <Divider style={{ backgroundColor: theme['color-basic-300'], width: '85%', alignSelf: 'flex-end' }} />}
+                        />
+                        : <View style={{ display: 'flex', flex: 1, width: '100%', justifyContent: 'space-between', alignItems: 'center', flexDirection: 'column' }}>
+                            <Image source={DEFAULT_IMAGE} style={{ width: '100%', maxHeight: '50%', overflow: 'visible', alignSelf:'center' }} />
+
+                            <View>
+                                <Text style={{ fontSize: 16, textAlign: 'center', color: theme['text-basic-color'] }}>{"Crypto Warden is an open-source project to simplify the management of crypto seed/backup phrases."}</Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={{ width: '100%', marginBottom: DEFAULT_2x_MARGIN, justifyContent: 'center', alignItems: 'center', paddingVertical: DEFAULT_1x_MARGIN }}
+                                onPress={() => {
+                                    navigation.navigate(PAGES.ONBOARDING)
+                                }}>
+                                <Text style={{ color: theme['color-primary-500'], fontWeight: '600' }}>How Crypto Warden works?</Text>
+                            </TouchableOpacity>
+
+                            <Button style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', width: '90%', backgroundColor: theme['background-color-button'], borderRadius: DEFAULT_CORNER_RADIUS, marginTop: 0, borderWidth: 0 }}
+                                onPress={() => {
+                                    syncData()
+                                }}>
+                                {props => <Text {...props} style={{ width: '80%', color: theme['text-primary-color-button'], textAlign: 'center', fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>{`Load Wallets`}</Text>
+                                }
+                            </Button>
+
+                        </View>
+                }
+            </View>
+
+            {
+                !premium
+                    ? <TouchableOpacity
+                        onPress={() => navigation.navigate(PAGES.PAYWALL)}
+                        style={{ width: '100%', marginTop: 10, marginBottom: 20 }}>
+                        <View
+                            style={{
+                                marginHorizontal: DEFAULT_PADDING,
+                                borderWidth: 1,
+                                borderColor: theme['transparency-basic-color'],
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                                height: 50,
+                                backgroundColor: theme['color-basic-600'],
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                paddingHorizontal: DEFAULT_2x_MARGIN
+                            }}>
+                            <MaterialCommunityIcons
+                                size={25} name='compare' color={'rgb(0,0,0)'}
+                            />
+                            <Text style={{ fontSize: 13, marginLeft: DEFAULT_1x_MARGIN, color: theme['text-basic-color'] }}>Get a beatiful Dark Mode.</Text>
+                        </View>
+                    </TouchableOpacity>
+                    : undefined
+            }
+        </StableSafeArea>
     )
 }
 

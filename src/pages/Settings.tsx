@@ -13,7 +13,7 @@ import { openURL } from '../utils/utils';
 import DeviceInfo from 'react-native-device-info';
 import AUTHENTICATOR_ICON from '../assets/authenticator.jpg'
 import { restorePurchases } from '../iap/PurchaseIAP';
-import { deleteAccount, signInWithAppleCredentials, signOut } from '../firebase/firebaseAuth';
+import { deleteAccount, isProviderAuthenticated, signInWithAppleCredentials, signInWithGoogleCredentials, signOut } from '../firebase/firebaseAuth';
 import RNModal from 'react-native-modal';
 import Toast from 'react-native-toast-message';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -21,6 +21,7 @@ import Rate from 'react-native-rate'
 import SettingsCell from '../components/cells/SettingsCell';
 import { setDarkMode } from '../redux/AccountSlice';
 import { setToLocalStorage } from '../storage/StorageManager';
+import ModalSafeArea from '../components/safeArea/ModalSafeArea';
 
 const Settings = () => {
     const theme = useTheme();
@@ -59,6 +60,7 @@ const Settings = () => {
         });
         const options = {
             AppleAppID: APP_STORE_IOS_ID,
+            GooglePackageName: 'com.sentinel.warden',
             preferInApp: true,
             openAppStoreIfInAppFails: true,
         }
@@ -76,13 +78,11 @@ const Settings = () => {
     }
 
     return (
-        <View style={{ flex: 1 }}>
+        <ModalSafeArea>
 
             <TopNavigation
                 style={{
                     paddingTop: 15, backgroundColor: theme['color-basic-500'],
-                    paddingLeft: DEFAULT_PADDING,
-                    paddingRight: DEFAULT_PADDING
                 }}
                 title={renderTitle}
             />
@@ -104,12 +104,12 @@ const Settings = () => {
                         {
                             premium
                                 ? < Switch
-                                    trackColor={{ false: theme['color-basic-600'], true: theme['color-basic-500'] }}
+                                    trackColor={{ false: theme['color-basic-500'], true: theme['color-basic-500'] }}
                                     thumbColor={darkMode ? theme['color-primary-500'] : theme['color-basic-600']}
                                     onValueChange={() => onDarkModeValueChange()}
                                     value={darkMode}
                                 />
-                                : <TouchableOpacity onPress={() => navigation.navigate(PAGES.PAYWALL)}>
+                                : <TouchableOpacity style={{padding:DEFAULT_1x_MARGIN}} onPress={() => navigation.navigate(PAGES.PAYWALL)}>
                                     <Text style={{ color: theme['text-basic-color'] }}>Upgrade</Text>
                                 </TouchableOpacity>
                         }
@@ -134,24 +134,13 @@ const Settings = () => {
 
                 <View style={styles().settingsBox}>
 
-                    <View style={styles().settingsItem}
-                    >
-                        <TouchableOpacity style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
-                            onPress={() => setSigninModalVisible(true)}>
-                            <View style={styles().settingsTextAndIcon}>
-                                <View style={{ ...styles().iconContainer, ...{ backgroundColor: 'rgb(53,120,246)' } }}>
-                                    <MaterialIcons name="person" size={16} color={'#fff'} />
-                                </View>
-                                <Text style={styles().settingsText}>Sign In</Text>
-                            </View>
-                            <Icon name='info-outline' fill={theme['text-basic-color']} style={{ width: 20, height: 20, marginLeft: 5 }} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => authenticated ? signOut() : signInWithAppleCredentials()} >
-                            <Text style={styles().rightButtons}>
-                                {authenticated ? 'Log Out' : ' Sign in with Apple'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                <SettingsCell
+                        headingIcon='account'
+                        trailingIcon='arrow-ios-forward'
+                        text='Manage Sign-In'
+                        iconBackgroundColor='rgb(53,120,246)'
+                        onPress={() =>  setSigninModalVisible(true)}
+                    />  
 
                     <Divider style={styles().divider} />
 
@@ -225,7 +214,7 @@ const Settings = () => {
                         trailingIcon='diagonal-arrow-right-up-outline'
                         text='Read our Security Model'
                         iconBackgroundColor='rgb(84, 190, 255)'
-                        onPress={() => openURL('https://getsentinel.io/security-model?ref=app')}
+                        onPress={() => openURL('https://getsentinel.io/security-model')}
                     />
                 </View>
 
@@ -318,7 +307,7 @@ const Settings = () => {
                         trailingIcon='diagonal-arrow-right-up-outline'
                         text='Privacy Policy'
                         iconBackgroundColor='rgb(53,120,246)'
-                        onPress={() => openURL('https://getsentinel.io/privacy-policy?ref=app')}
+                        onPress={() => openURL('https://getsentinel.io/privacy-policy')}
                     />
 
                     <Divider style={styles().divider} />
@@ -326,9 +315,9 @@ const Settings = () => {
                     <SettingsCell
                         headingIcon="copyright"
                         trailingIcon='diagonal-arrow-right-up-outline'
-                        text='Copyright'
+                        text='Terms of Service'
                         iconBackgroundColor='rgb(170,170,170)'
-                        onPress={() => openURL('https://getsentinel.io/terms-of-service?ref=app')}
+                        onPress={() => openURL('https://getsentinel.io/terms-of-service')}
                     />
 
                 </View>
@@ -387,44 +376,82 @@ const Settings = () => {
                         borderColor: 'transparent',
                         display: 'flex',
                         justifyContent: 'space-between',
-                        paddingBottom: 0,
+                        paddingBottom: 30,
                         paddingHorizontal: DEFAULT_2x_MARGIN,
                         width: '100%'
                     }}
                 >
-                    <MaterialCommunityIcons style={{ marginTop: 10, marginBottom: 10, alignSelf: 'center' }} name="apple" size={70} color={theme['text-basic-color']} />
+                    <MaterialCommunityIcons style={{ marginTop: 10, marginBottom: 10, alignSelf: 'center' }} name="account-box" size={70} color={theme['text-basic-color']} />
 
-                    <Text style={{ color: theme['text-basic-color'], fontSize: DEFAULT_MODAL_TITLE, fontWeight: '600', marginBottom: 30, textAlign: 'center' }}>{"Sign In with Apple"}</Text>
+                    <Text style={{ color: theme['text-basic-color'], fontSize: DEFAULT_MODAL_TITLE, fontWeight: '600', marginBottom: 30, textAlign: 'center' }}>{"Sign-In to Sentinel"}</Text>
 
-                    <Text style={styles().signInModalDescription}>{"Why should you sign-in?"}</Text>
+                    <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400' }}>{"Why should you sign-in?"}</Text>
 
                     <View style={styles().bulletPoint}>
-                        <MaterialCommunityIcons name="crown" size={25} color={theme['text-basic-color']} style={{ marginRight: DEFAULT_2x_MARGIN }} />
-                        <Text style={styles().signInModalDescription}>{"Transfer your Premium purchase between iOS and macOS devices"}</Text>
+                        <MaterialCommunityIcons name="shield-plus" size={20} color={theme['text-basic-color']} />
+                        <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400', marginLeft: 20 }}>{"Transfer Crypto Warden Plus on all your devices"}</Text>
                     </View>
 
                     <View style={styles().bulletPoint}>
-                        <MaterialCommunityIcons name="email" size={25} color={theme['text-basic-color']} style={{ marginRight: DEFAULT_2x_MARGIN }} />
-                        <Text style={styles().signInModalDescription}>{"Stay informed with important news about Sentinel"}</Text>
+                        <MaterialCommunityIcons name="email" size={20} color={theme['text-basic-color']} />
+                        <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400', marginLeft: 20 }}>{"Stay informed with important news about Sentinel"}</Text>
                     </View>
 
                     <View style={styles().bulletPoint}>
-                        <MaterialCommunityIcons name="vote" size={25} color={theme['text-basic-color']} style={{ marginRight: DEFAULT_2x_MARGIN }} />
-                        <Text style={styles().signInModalDescription}>{"Cast your vote to shape the roadmap of Sentinel"}</Text>
+                        <MaterialCommunityIcons name="vote" size={20} color={theme['text-basic-color']} />
+                        <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400', marginLeft: 20 }}>{"Participate to shaping the roadmap of Sentinel"}</Text>
                     </View>
 
-                    <Text style={{ ...styles().signInModalDescription, ...{ marginTop: DEFAULT_2x_MARGIN } }}>{"No data will be transferred outside of your iCloud Keychain"}</Text>
+                    <View style={styles().bulletPoint}>
+                        <MaterialCommunityIcons name="cloud" size={20} color={theme['text-basic-color']} />
+                        <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400', marginLeft: 20 }}>{"Required if you enabled Sentinel Cloud security option"}</Text>
+                    </View>
 
-                    <Button
-                        style={{ width: '100%', marginTop: 30, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], borderWidth: 0 }}
-                        onPress={() => {
-                            setSigninModalVisible(false)
-                            if (!authenticated) { signInWithAppleCredentials() }
-                        }}>
-                        {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
-                            {authenticated ? 'I understand' : ` Sign in with Apple`}
-                        </Text>}
-                    </Button>
+                    <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE - 4, fontWeight: '400', marginTop: 20, marginLeft: 0 }}>{"By signing-up you agree to receive email from us regarding product roadmap and new launches. You may unsubscribe at any time."}</Text>
+
+                    <View style={styles().providerBox}>
+                        <View style={styles().providerName}>
+                            <MaterialCommunityIcons name="apple" size={25} color={theme['text-basic-color']} />
+                            <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400', marginLeft: DEFAULT_1x_MARGIN }}>{"Apple Sign-In"}</Text>
+                        </View>
+
+                        <Button
+                            style={{ width: 80, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: isProviderAuthenticated('apple.com') ? theme['icon-inactive-color'] : theme['background-color-button'], borderWidth: 0, }}
+                            onPress={() => {
+                                setSigninModalVisible(false)
+                                if (!authenticated || (authenticated && !isProviderAuthenticated('apple.com'))) {
+                                    signInWithAppleCredentials()
+                                } else {
+                                    signOut()
+                                }
+                            }}>
+                            {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '500', fontSize: BUTTON_FONT_SIZE - 4, }}>
+                                {isProviderAuthenticated('apple.com') ? 'Sign-Out' : `Sign-In`}
+                            </Text>}
+                        </Button>
+                    </View>
+
+                    <View style={styles().providerBox}>
+                        <View style={styles().providerName}>
+                            <MaterialCommunityIcons name="google" size={25} color={theme['text-basic-color']} />
+                            <Text style={{ color: theme['text-basic-color'], textAlign: 'left', fontSize: DEFAULT_TEXT_SIZE, fontWeight: '400', marginLeft: DEFAULT_1x_MARGIN }}>{"Google Sign-In"}</Text>
+                        </View>
+
+                        <Button
+                            style={{ width: 80, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: isProviderAuthenticated('google.com') ? theme['icon-inactive-color'] : theme['background-color-button'], borderWidth: 0 }}
+                            onPress={() => {
+                                setSigninModalVisible(false)
+                                if (!isProviderAuthenticated('google.com')) {
+                                    signInWithGoogleCredentials()
+                                } else {
+                                    signOut()
+                                }
+                            }}>
+                            {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '500', fontSize: BUTTON_FONT_SIZE - 4 }}>
+                                {isProviderAuthenticated('google.com') ? 'Sign-Out' : `Sign-In`}
+                            </Text>}
+                        </Button>
+                    </View>
                 </Card>
 
             </RNModal>
@@ -475,7 +502,7 @@ const Settings = () => {
                 </Card>
 
             </RNModal>
-        </View>
+        </ModalSafeArea>
     )
 }
 
@@ -494,7 +521,7 @@ const styles = () => {
             borderRadius: DEFAULT_CORNER_RADIUS,
             paddingHorizontal: 0,
             marginBottom: 30,
-            marginHorizontal: 20,
+            // marginHorizontal: 20,
             // borderWidth: 1,
             // borderColor: theme['transparency-basic-color']
         },
@@ -532,6 +559,16 @@ const styles = () => {
             flexDirection: 'row',
             alignItems: 'center',
             marginTop: DEFAULT_2x_MARGIN,
+        },
+        providerName: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        providerBox: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: DEFAULT_1x_MARGIN,
         },
         iconContainer: {
             marginRight: 10,

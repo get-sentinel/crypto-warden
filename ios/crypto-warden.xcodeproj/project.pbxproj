@@ -312,7 +312,7 @@
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			packageReferences = (
 				925F42F2296573AB0068854A /* XCRemoteSwiftPackageReference "KeychainAccess" */,
-				92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic.git" */,
+				92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic" */,
 			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
@@ -584,7 +584,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CryptoWarden.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 12;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = Q2BSA3R25W;
 				ENABLE_BITCODE = NO;
@@ -604,7 +604,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -633,7 +633,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CryptoWarden.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 12;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = Q2BSA3R25W;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -651,7 +651,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -842,7 +842,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic.git" */ = {
+		92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mhdhejazi/Dynamic.git";
 			requirement = {
@@ -863,7 +863,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		92083B0B296AEC4400D9C7BC /* Dynamic */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic.git" */;
+			package = 92083B0A296AEC4400D9C7BC /* XCRemoteSwiftPackageReference "Dynamic" */;
 			productName = Dynamic;
 		};
 		925F42F3296573AB0068854A /* KeychainAccess */ = {

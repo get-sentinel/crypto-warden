@@ -18,6 +18,7 @@ import { ImageSource } from "react-native-vector-icons/Icon";
 import PageTitle from "../components/PageTitle";
 import { analyzeSeed } from "../utils/utils";
 import { globalStyles } from "../utils/globalStyles";
+import ModalSafeArea from "../components/safeArea/ModalSafeArea";
 
 const WalletDetails = React.memo(() => {
     const theme = useTheme();
@@ -34,6 +35,8 @@ const WalletDetails = React.memo(() => {
     const [secureEntryForPassword, setSecureEntryForPassword] = useState(true);
     const [secureEntryForSeed, setSecureEntryForSeed] = useState(true);
     const selectedWallet = useSelector((state: any) => state.walletSlice.selectedWallet);
+    const uid = useSelector((state: any) => state.accountSlice.uid);
+    const securityOption = useSelector((state: any) => state.accountSlice.securityOption);
     const [deletionModalVisible, setDeletionModalVisible] = useState(false)
     const [seedphraseCopy, setSeedphraseCopy] = useState(false)
     const [passwordCopy, setPasswordCopy] = useState(false)
@@ -116,7 +119,8 @@ const WalletDetails = React.memo(() => {
             updateDate: new Date()
         })
 
-        dispatch(updateWallet({ updatedWallet: updatedWallet }))
+        dispatch(updateWallet({ updatedWallet: updatedWallet, uid: uid, securityOption: securityOption }))
+        navigation.goBack()
     }
 
     const deleteWallet = () => {
@@ -130,326 +134,316 @@ const WalletDetails = React.memo(() => {
 
     return (
 
-        <>
-            <View style={{ flex: 1 }}>
+        <ModalSafeArea>
 
-                <View style={{
-                    padding: DEFAULT_PADDING,
-                    backgroundColor: theme['color-basic-500'],
-                    flex: 1
-                }}>
+            <View style={styles().toolbar}>
+                <PageTitle title='Wallet Details' />
 
-                    <View style={styles().toolbar}>
-                        <PageTitle title='Wallet Details' />
-
-                        {
-                            editMode
-                                ? <TouchableOpacity
-                                    style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
-                                    onPress={() => {
-                                        setEditMode(false)
-                                        update()
-                                    }}>
-                                    <MaterialCommunityIcons name={'check'} size={20} color={theme['text-primary-color-button']} />
-                                </TouchableOpacity>
-                                : <TouchableOpacity
-                                    style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
-                                    onPress={() => {
-                                        setEditMode(true)
-                                    }}>
-                                    <MaterialCommunityIcons name={'square-edit-outline'} size={20} color={theme['text-primary-color-button']} />
-                                </TouchableOpacity>
-                        }
-                    </View>
-
-                    <ScrollView
-                        contentContainerStyle={{
-                            borderColor: 'transparent',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            marginTop: 20,
-                            paddingBottom: 200,
-                        }}
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps='handled'>
-
-                        <View style={{ marginBottom: DEFAULT_3x_MARGIN, flexDirection: "row", alignItems: 'center' }}>
-                            <TouchableOpacity style={{ marginRight: DEFAULT_2x_MARGIN }}
-                                disabled={!editMode}
-                                onPress={() => setWalleteProviderSelectionModalVisible(true)}>
-                                <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 0, borderColor: theme['color-basic-300'] }} />
-                                {editMode
-                                    ? <View style={{ borderRadius: 50, width: 21, height: 21, backgroundColor: theme['color-primary-500'], position: 'absolute', right: -5, bottom: -5, justifyContent: 'center', alignItems: 'center' }}>
-                                        <MaterialCommunityIcons size={13}
-                                            color={theme['text-primary-color-button']}
-                                            name='pencil'
-                                            style={{}} />
-                                    </View>
-                                    : undefined
-                                }
-                            </TouchableOpacity>
-                            {
-                                editMode
-                                    ? <Input
-                                        value={walletName}
-                                        textStyle={styles().walletNameTextStyle}
-                                        caption=''
-                                        size='medium'
-                                        style={{ borderWidth: 0, paddingHorizontal: 0, paddingVertical: 0, marginVertical: 0, backgroundColor: theme['color-basic-600'], flex: 1 }}
-                                        accessoryRight={() => <TouchableOpacity onPress={() => setWalletName('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['unselected-icon-color']}
-                                                name='window-close' />
-                                        </TouchableOpacity>}
-                                        onChangeText={(nextValue: string) => setWalletName(nextValue)}
-                                    />
-                                    : <Text style={styles().walletNameTextStyle}> {walletName} </Text>
-                            }
-                        </View>
-
-                        {/* # WALLET SEED PHRASE */}
-                        <View style={{ ...styles().textStyle, ...{ backgroundColor: seedphraseCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
-                            <TouchableOpacity style={styles().copyCell} onPress={() => {
-                                copyToClipboard(walletSeedPhrase)
-                                setSeedphraseCopy(true)
+                {
+                    editMode
+                        ? <TouchableOpacity
+                            style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
+                            onPress={() => {
+                                setEditMode(false)
+                                update()
                             }}>
-                                {
-                                    seedphraseCopy
-                                        ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
-                                        : <Text style={styles().label}>{'seed phrase'}</Text>
-                                }
-                                <Text style={{ ...styles().inputTextStyle, ...{ fontSize: secureEntryForSeed ? 7 : 16 }, ...styles().textAdjustments, ...styles().cellAdjustments }}>{secureEntryForSeed ? '⬤ ⬤ ⬤ ⬤ ⬤ ⬤' : walletSeedPhrase}</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={{}} onPress={() => {
-                                setSecureEntryForSeed(!secureEntryForSeed)
-                                setWalletSeedPhrase(walletSeedPhrase)
+                            <MaterialCommunityIcons name={'check'} size={20} color={theme['text-primary-color-button']} />
+                        </TouchableOpacity>
+                        : <TouchableOpacity
+                            style={{ ...globalStyles().actionButton, ...{ backgroundColor: theme['color-primary-500'] } }}
+                            onPress={() => {
+                                setEditMode(true)
                             }}>
-                                <MaterialCommunityIcons size={20}
-                                    color={theme['color-primary-500']}
-                                    name='eye' />
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* # WALLET ADDRESS */}
-                        {
-                            editMode ?
-                                <View style={{ ...styles().inputStyle, ...styles().cellAdjustments }}>
-                                    <Text style={styles().label}>{'wallet address'}</Text>
-                                    <Input
-                                        value={walletAddress}
-                                        textStyle={styles().inputTextStyle}
-                                        caption=''
-                                        size='small'
-                                        style={styles().inputField}
-                                        onChangeText={(nextValue: string) => setWalletAddress(nextValue)}
-                                        accessoryRight={() => <TouchableOpacity onPress={() => setWalletAddress('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['unselected-icon-color']}
-                                                name='window-close' />
-                                        </TouchableOpacity>}
-                                    />
-                                </View>
-                                : walletAddress ?
-                                    <View style={{ ...styles().textStyle, ...{ backgroundColor: addressCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
-                                        <TouchableOpacity style={styles().copyCell} onPress={() => {
-                                            copyToClipboard(walletPassword)
-                                            setAddressCopy(true)
-                                        }}>
-                                            {
-                                                addressCopy
-                                                    ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
-                                                    : <Text style={styles().label}>{'wallet address'}</Text>
-                                            }
-                                            <Text style={{ ...styles().inputTextStyle, ...styles().textAdjustments, ...styles().cellAdjustments }}>{walletAddress}</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    : undefined
-                        }
-
-                        {/* # WALLET PASSWORD */}
-                        {
-                            editMode ?
-                                <View style={{ ...styles().inputStyle, ...styles().cellAdjustments }}>
-                                    <Text style={styles().label}>{'wallet password'}</Text>
-                                    <Input
-                                        value={walletPassword}
-                                        textStyle={styles().inputTextStyle}
-                                        caption=''
-                                        size='small'
-                                        style={styles().inputField}
-                                        onChangeText={(nextValue: string) => setWalletPassword(nextValue)}
-                                        accessoryRight={() => <TouchableOpacity onPress={() => setWalletPassword('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['unselected-icon-color']}
-                                                name='window-close' />
-                                        </TouchableOpacity>}
-                                    />
-                                </View>
-                                : walletPassword ?
-                                    <View style={{ ...styles().textStyle, ...{ backgroundColor: passwordCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
-                                        <TouchableOpacity style={styles().copyCell} onPress={() => {
-                                            copyToClipboard(walletPassword)
-                                            setPasswordCopy(true)
-                                        }}>
-                                            {
-                                                passwordCopy
-                                                    ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
-                                                    : <Text style={styles().label}>{'password'}</Text>
-                                            }
-                                            <Text style={{ ...styles().inputTextStyle, ...{ fontSize: secureEntryForPassword ? 7 : 16 }, ...styles().textAdjustments, ...styles().cellAdjustments }}>{secureEntryForPassword ? '⬤ ⬤ ⬤ ⬤ ⬤ ⬤' : walletPassword}</Text>
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity onPress={() => {
-                                            setSecureEntryForPassword(!secureEntryForPassword)
-                                        }}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['color-primary-500']}
-                                                name='eye' />
-                                        </TouchableOpacity>
-                                    </View>
-                                    : undefined
-                        }
-
-                    </ScrollView>
-
-                    {
-                        editMode ?
-                            <Button
-                                style={{ width: '50%', alignSelf: 'center', marginTop: DEFAULT_3x_MARGIN, borderRadius: DEFAULT_CORNER_RADIUS, borderColor: theme['delete-button-background'], borderWidth: 1, backgroundColor: theme['delete-button-background'], marginBottom: DEFAULT_3x_MARGIN }}
-                                onPress={() => setDeletionModalVisible(true)}>
-                                {props => <Text {...props} style={{ color: theme['delete-button-text'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 3 }}>
-                                    {`Delete Wallet`}
-                                </Text>}
-                            </Button>
-                            : undefined
-                    }
-
-
-                    {/* Staus message */}
-                    <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginBottom: DEFAULT_2x_MARGIN }}>
-                        <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'circle'} size={10} color={SEED_STATUS_MESSAGE[checkSeedStatus].color} />
-                        <Text style={{ fontWeight: '500', fontSize: 12, color: theme['text-basic-color'] }}>{SEED_STATUS_MESSAGE[checkSeedStatus].message}</Text>
-                    </View>
-
-                    <RNModal
-                        isVisible={walleteProviderSelectionModalVisible}
-                        onBackdropPress={() => setWalleteProviderSelectionModalVisible(false)}
-                        onSwipeComplete={() => setWalleteProviderSelectionModalVisible(false)}
-                        swipeDirection='down'
-                        style={{
-                            justifyContent: "flex-end",
-                            margin: 0
-                        }}
-                    >
-
-                        <Card
-                            disabled={true}
-                            style={{
-                                backgroundColor: theme['color-basic-modal-background'],
-                                borderColor: 'transparent',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                paddingBottom: 0,
-                            }}
-                        >
-
-                            <View style={styles().settingsBox}>
-                                <ScrollView
-                                    contentContainerStyle={{ display: 'flex', flexDirection: 'row', width: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}
-                                >
-                                    {
-                                        WALLET_PROVIDERS.map((item) => {
-                                            return <TouchableOpacity style={{
-                                                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                                marginRight: 10,
-                                                marginBottom: 10,
-                                                width: 75,
-                                                height: 75,
-                                                borderRadius: 10,
-                                                borderWidth: item.id === walletProvider ? 2 : 0.5,
-                                                paddingVertical: 4,
-                                                backgroundColor: theme['color-basic-200'],
-                                                borderColor: item.id === walletProvider ? theme['color-primary-500'] : theme['color-basic-300'],
-                                            }}
-                                                key={item.id}
-                                                onPress={(e) => {
-                                                    selectProvider(item.id)
-                                                }}>
-
-                                                <Image source={item.imagePath} style={{ width: 40, height: 40, borderRadius: 5, }} />
-                                                <Text style={{ fontSize: 9, marginTop: 5, textTransform: 'capitalize', textAlign: 'center' }}>{item.name}</Text>
-                                            </TouchableOpacity>
-
-                                        })}
-                                </ScrollView>
-                            </View>
-
-                            <Button
-                                style={{ width: '100%', marginBottom: 25, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], borderWidth: 0 }}
-                                onPress={() => {
-                                    setWalleteProviderSelectionModalVisible(false)
-                                }}>
-                                {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
-                                    {'Close Menu'}
-                                </Text>}
-                            </Button>
-                        </Card>
-
-                    </RNModal>
-
-
-
-                    <RNModal
-                        isVisible={deletionModalVisible}
-                        onBackdropPress={() => setDeletionModalVisible(false)}
-                        onSwipeComplete={() => setDeletionModalVisible(false)}
-                        swipeDirection='down'
-                        style={{
-                            justifyContent: "flex-end",
-                            margin: 0
-                        }}
-                    >
-
-                        <Card
-                            disabled={true}
-                            style={{
-                                backgroundColor: theme['color-basic-modal-background'],
-                                borderColor: 'transparent',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                paddingBottom: 0,
-                            }}
-                        >
-                            <MaterialCommunityIcons style={{ marginTop: 10, marginBottom: 10, alignSelf: 'center' }} name="delete-variant" size={70} color={theme['text-basic-color']} />
-
-                            <Text style={{ color: theme['text-basic-color'], fontSize: DEFAULT_MODAL_TITLE, fontWeight: '600', marginBottom: 30, textAlign: 'center' }}>{"Are you sure you want to delete this wallet?"}</Text>
-
-                            <Button
-                                style={{ width: '100%', marginTop: 30, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], borderWidth: 0 }}
-                                onPress={() => {
-                                    setDeletionModalVisible(false)
-                                    deleteWallet()
-                                }}>
-                                {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
-                                    {'Delete'}
-                                </Text>}
-                            </Button>
-
-                            <Button
-                                style={{ width: '100%', marginTop: 0, borderWidth: 0 }}
-                                onPress={() => setDeletionModalVisible(false)}>
-                                {props => <Text {...props} style={{ color: theme['text-basic-color'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
-                                    {`Cancel`}
-                                </Text>}
-                            </Button>
-                        </Card>
-
-                    </RNModal>
-                </View>
+                            <MaterialCommunityIcons name={'square-edit-outline'} size={20} color={theme['text-primary-color-button']} />
+                        </TouchableOpacity>
+                }
             </View>
 
-        </>
+            <ScrollView
+                contentContainerStyle={{
+                    borderColor: 'transparent',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    marginTop: 20,
+                    paddingBottom: 200,
+                }}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps='handled'>
+
+                <View style={{ marginBottom: DEFAULT_3x_MARGIN, flexDirection: "row", alignItems: 'center' }}>
+                    <TouchableOpacity style={{ marginRight: DEFAULT_2x_MARGIN }}
+                        disabled={!editMode}
+                        onPress={() => setWalleteProviderSelectionModalVisible(true)}>
+                        <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 0, borderColor: theme['color-basic-300'] }} />
+                        {editMode
+                            ? <View style={{ borderRadius: 50, width: 21, height: 21, backgroundColor: theme['color-primary-500'], position: 'absolute', right: -5, bottom: -5, justifyContent: 'center', alignItems: 'center' }}>
+                                <MaterialCommunityIcons size={13}
+                                    color={theme['text-primary-color-button']}
+                                    name='pencil'
+                                    style={{}} />
+                            </View>
+                            : undefined
+                        }
+                    </TouchableOpacity>
+                    {
+                        editMode
+                            ? <Input
+                                value={walletName}
+                                textStyle={styles().walletNameTextStyle}
+                                caption=''
+                                size='medium'
+                                style={{ borderWidth: 0, paddingHorizontal: 0, paddingVertical: 0, marginVertical: 0, backgroundColor: theme['color-basic-600'], flex: 1 }}
+                                accessoryRight={() => <TouchableOpacity onPress={() => setWalletName('')}>
+                                    <MaterialCommunityIcons size={20}
+                                        color={theme['unselected-icon-color']}
+                                        name='window-close' />
+                                </TouchableOpacity>}
+                                onChangeText={(nextValue: string) => setWalletName(nextValue)}
+                            />
+                            : <Text style={styles().walletNameTextStyle}> {walletName} </Text>
+                    }
+                </View>
+
+                {/* # WALLET SEED PHRASE */}
+                <View style={{ ...styles().textStyle, ...{ backgroundColor: seedphraseCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
+                    <TouchableOpacity style={styles().copyCell} onPress={() => {
+                        copyToClipboard(walletSeedPhrase)
+                        setSeedphraseCopy(true)
+                    }}>
+                        {
+                            seedphraseCopy
+                                ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
+                                : <Text style={styles().label}>{'seed phrase'}</Text>
+                        }
+                        <Text style={{ ...styles().inputTextStyle, ...{ fontSize: secureEntryForSeed ? 7 : 16 }, ...styles().textAdjustments, ...styles().cellAdjustments }}>{secureEntryForSeed ? '⬤ ⬤ ⬤ ⬤ ⬤ ⬤' : walletSeedPhrase}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={{}} onPress={() => {
+                        setSecureEntryForSeed(!secureEntryForSeed)
+                        setWalletSeedPhrase(walletSeedPhrase)
+                    }}>
+                        <MaterialCommunityIcons size={20}
+                            color={theme['color-primary-500']}
+                            name='eye' />
+                    </TouchableOpacity>
+                </View>
+
+                {/* # WALLET ADDRESS */}
+                {
+                    editMode ?
+                        <View style={{ ...styles().inputStyle, ...styles().cellAdjustments }}>
+                            <Text style={styles().label}>{'wallet address'}</Text>
+                            <Input
+                                value={walletAddress}
+                                textStyle={styles().inputTextStyle}
+                                caption=''
+                                size='small'
+                                style={styles().inputField}
+                                onChangeText={(nextValue: string) => setWalletAddress(nextValue)}
+                                accessoryRight={() => <TouchableOpacity onPress={() => setWalletAddress('')}>
+                                    <MaterialCommunityIcons size={20}
+                                        color={theme['unselected-icon-color']}
+                                        name='window-close' />
+                                </TouchableOpacity>}
+                            />
+                        </View>
+                        : walletAddress ?
+                            <View style={{ ...styles().textStyle, ...{ backgroundColor: addressCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
+                                <TouchableOpacity style={styles().copyCell} onPress={() => {
+                                    copyToClipboard(walletPassword)
+                                    setAddressCopy(true)
+                                }}>
+                                    {
+                                        addressCopy
+                                            ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
+                                            : <Text style={styles().label}>{'wallet address'}</Text>
+                                    }
+                                    <Text style={{ ...styles().inputTextStyle, ...styles().textAdjustments, ...styles().cellAdjustments }}>{walletAddress}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            : undefined
+                }
+
+                {/* # WALLET PASSWORD */}
+                {
+                    editMode ?
+                        <View style={{ ...styles().inputStyle, ...styles().cellAdjustments }}>
+                            <Text style={styles().label}>{'wallet password'}</Text>
+                            <Input
+                                value={walletPassword}
+                                textStyle={styles().inputTextStyle}
+                                caption=''
+                                size='small'
+                                style={styles().inputField}
+                                onChangeText={(nextValue: string) => setWalletPassword(nextValue)}
+                                accessoryRight={() => <TouchableOpacity onPress={() => setWalletPassword('')}>
+                                    <MaterialCommunityIcons size={20}
+                                        color={theme['unselected-icon-color']}
+                                        name='window-close' />
+                                </TouchableOpacity>}
+                            />
+                        </View>
+                        : walletPassword ?
+                            <View style={{ ...styles().textStyle, ...{ backgroundColor: passwordCopy ? theme['color-primary-500'] : theme['color-basic-600'], }, ...styles().cellAdjustments }}>
+                                <TouchableOpacity style={styles().copyCell} onPress={() => {
+                                    copyToClipboard(walletPassword)
+                                    setPasswordCopy(true)
+                                }}>
+                                    {
+                                        passwordCopy
+                                            ? <Text style={styles().copyLabel}>{'COPIED'}</Text>
+                                            : <Text style={styles().label}>{'password'}</Text>
+                                    }
+                                    <Text style={{ ...styles().inputTextStyle, ...{ fontSize: secureEntryForPassword ? 7 : 16 }, ...styles().textAdjustments, ...styles().cellAdjustments }}>{secureEntryForPassword ? '⬤ ⬤ ⬤ ⬤ ⬤ ⬤' : walletPassword}</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity onPress={() => {
+                                    setSecureEntryForPassword(!secureEntryForPassword)
+                                }}>
+                                    <MaterialCommunityIcons size={20}
+                                        color={theme['color-primary-500']}
+                                        name='eye' />
+                                </TouchableOpacity>
+                            </View>
+                            : undefined
+                }
+
+            </ScrollView>
+
+            {
+                editMode ?
+                    <Button
+                        style={{ width: '50%', alignSelf: 'center', marginTop: DEFAULT_3x_MARGIN, borderRadius: DEFAULT_CORNER_RADIUS, borderColor: theme['delete-button-background'], borderWidth: 1, backgroundColor: theme['delete-button-background'], marginBottom: DEFAULT_3x_MARGIN }}
+                        onPress={() => setDeletionModalVisible(true)}>
+                        {props => <Text {...props} style={{ color: theme['delete-button-text'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE - 3 }}>
+                            {`Delete Wallet`}
+                        </Text>}
+                    </Button>
+                    : undefined
+            }
+
+
+            {/* Staus message */}
+            <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginBottom: DEFAULT_2x_MARGIN }}>
+                <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'circle'} size={10} color={SEED_STATUS_MESSAGE[checkSeedStatus].color} />
+                <Text style={{ fontWeight: '500', fontSize: 12, color: theme['text-basic-color'] }}>{SEED_STATUS_MESSAGE[checkSeedStatus].message}</Text>
+            </View>
+
+            <RNModal
+                isVisible={walleteProviderSelectionModalVisible}
+                onBackdropPress={() => setWalleteProviderSelectionModalVisible(false)}
+                onSwipeComplete={() => setWalleteProviderSelectionModalVisible(false)}
+                swipeDirection='down'
+                style={{
+                    justifyContent: "flex-end",
+                    margin: 0
+                }}
+            >
+
+                <Card
+                    disabled={true}
+                    style={{
+                        backgroundColor: theme['color-basic-modal-background'],
+                        borderColor: 'transparent',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        paddingBottom: 0,
+                    }}
+                >
+
+                    <View style={styles().settingsBox}>
+                        <ScrollView
+                            contentContainerStyle={{ display: 'flex', flexDirection: 'row', width: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}
+                        >
+                            {
+                                WALLET_PROVIDERS.map((item) => {
+                                    return <TouchableOpacity style={{
+                                        display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                        marginRight: 10,
+                                        marginBottom: 10,
+                                        width: 75,
+                                        height: 75,
+                                        borderRadius: 10,
+                                        borderWidth: item.id === walletProvider ? 2 : 0.5,
+                                        paddingVertical: 4,
+                                        backgroundColor: theme['color-basic-200'],
+                                        borderColor: item.id === walletProvider ? theme['color-primary-500'] : theme['color-basic-300'],
+                                    }}
+                                        key={item.id}
+                                        onPress={(e) => {
+                                            selectProvider(item.id)
+                                        }}>
+
+                                        <Image source={item.imagePath} style={{ width: 40, height: 40, borderRadius: 5, }} />
+                                        <Text style={{ fontSize: 9, marginTop: 5, textTransform: 'capitalize', textAlign: 'center' }}>{item.name}</Text>
+                                    </TouchableOpacity>
+
+                                })}
+                        </ScrollView>
+                    </View>
+
+                    <Button
+                        style={{ width: '100%', marginBottom: 25, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], borderWidth: 0 }}
+                        onPress={() => {
+                            setWalleteProviderSelectionModalVisible(false)
+                        }}>
+                        {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
+                            {'Close Menu'}
+                        </Text>}
+                    </Button>
+                </Card>
+
+            </RNModal>
+
+
+
+            <RNModal
+                isVisible={deletionModalVisible}
+                onBackdropPress={() => setDeletionModalVisible(false)}
+                onSwipeComplete={() => setDeletionModalVisible(false)}
+                swipeDirection='down'
+                style={{
+                    justifyContent: "flex-end",
+                    margin: 0
+                }}
+            >
+
+                <Card
+                    disabled={true}
+                    style={{
+                        backgroundColor: theme['color-basic-modal-background'],
+                        borderColor: 'transparent',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        paddingBottom: 0,
+                    }}
+                >
+                    <MaterialCommunityIcons style={{ marginTop: 10, marginBottom: 10, alignSelf: 'center' }} name="delete-variant" size={70} color={theme['text-basic-color']} />
+
+                    <Text style={{ color: theme['text-basic-color'], fontSize: DEFAULT_MODAL_TITLE, fontWeight: '600', marginBottom: 30, textAlign: 'center' }}>{"Are you sure you want to delete this wallet?"}</Text>
+
+                    <Button
+                        style={{ width: '100%', marginTop: 30, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], borderWidth: 0 }}
+                        onPress={() => {
+                            setDeletionModalVisible(false)
+                            deleteWallet()
+                        }}>
+                        {props => <Text {...props} style={{ color: theme['text-primary-color-button'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
+                            {'Delete'}
+                        </Text>}
+                    </Button>
+
+                    <Button
+                        style={{ width: '100%', marginTop: 0, borderWidth: 0 }}
+                        onPress={() => setDeletionModalVisible(false)}>
+                        {props => <Text {...props} style={{ color: theme['text-basic-color'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
+                            {`Cancel`}
+                        </Text>}
+                    </Button>
+                </Card>
+
+            </RNModal>
+        </ModalSafeArea>
     );
 });
 

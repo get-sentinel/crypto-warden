@@ -31,7 +31,7 @@ const SecurityCell = ({ title, description, selected, sync, alert, securityOptio
             borderRadius: DEFAULT_CORNER_RADIUS,
             marginBottom: DEFAULT_1x_MARGIN,
             marginTop: DEFAULT_3x_MARGIN,
-            borderWidth: 2,
+            borderWidth: 3,
             borderColor: selected ? theme['color-primary-500'] : theme['color-basic-600'],
         }}>
             <TouchableOpacity onPress={() => onPress()} style={styles().cellContainer}>

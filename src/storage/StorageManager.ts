@@ -1,12 +1,13 @@
 import { Platform } from "react-native";
 import Wallet from "../class/Wallet";
-import { E_STORAGE_KEY, KEYCHAIN_KEY, LOCAL_STORAGE_KEYS, SECURITY_OPTIONS, SECURITY_OPTION_DISPLAY_NAMES, SENTINEL_CLOUD_KEY } from "../utils/constants";
+import { E_STORAGE_KEY, KEYCHAIN_KEY, LOCAL_STORAGE_KEYS, SECURITY_OPTIONS, SECURITY_OPTION_DISPLAY_NAMES, SENTINEL_CLOUD_KEY, TOAST_POSITION } from "../utils/constants";
 import * as EncryptedStorageManager from './EncryptedStorageManager'
 import * as KeychainManager from './KeychainManager';
 import * as FirestoreManager from '../firebase/firestore';
 import { Dispatch } from "react";
 import { loadWallets } from "../redux/WalletSlice";
 import { setPassword, setSecurityOption } from "../redux/AccountSlice";
+import Toast from "react-native-toast-message";
 
 export const mergeWallets = (local: Wallet[], remote: Wallet[]): Wallet[] => {
     const mergedWallets: Wallet[] = [];
@@ -129,6 +130,7 @@ export const getWalletsAndDispatch = async ({ dispatch, local = [], securityOpti
     }
 
     dispatch(loadWallets(remote));
+    return remote.length
 }
 
 export const switchSecureStorage = async ({ local, oldSecurityOption, newSecurityOption, newPassword, oldPassword, uid, statusMessage, setStatusMessage, deleteOrigin, dispatch }: { local: Wallet[], oldSecurityOption: string, newSecurityOption: string, newPassword: string, oldPassword: string, uid: string, dispatch: Dispatch<any>, statusMessage: string[], setStatusMessage: (messageList: string[]) => void, deleteOrigin: boolean }) => {

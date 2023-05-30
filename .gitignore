@@ -69,3 +69,4 @@ buck-out/
 /ios/Google*
 /ios/crypto-warden.xcworkspace/contents.*
 /ios/Constants.swift
+/src/config/GoogleSignIn.json

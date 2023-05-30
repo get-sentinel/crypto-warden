@@ -15,35 +15,35 @@ const OnboardingCarousel = () => {
         {
             backgroundColor: '#fff',
             image: <Image style={styles().image} source={ONBOARDING1} />,
-            title: 'Create a wallet',
-            subtitle: 'Use your favorite wallet provider to create a wallet.',
+            title: 'What is Crypto Warden?',
+            subtitle: 'It\'s an app that allows you to securely store your crypto wallet seed/backup phrases to avoid losing them.',
         },
         {
             backgroundColor: '#fff',
             image: <Image style={styles().image} source={ONBOARDING2} />,
-            title: 'Copy the seed phrase',
-            subtitle: 'Take the newly generated 12-24 seed phrase and save it in Crypto Warden.',
+            title: 'Create a new wallet',
+            subtitle: 'Once the wallet provider (e.g. Metamask) gives you the 12 words phrase save it in Crypto Warden.',
         },
         {
             backgroundColor: '#fff',
             image: <Image style={styles().image} source={ONBOARDING3} />,
-            title: 'Safe in your personal Keychain',
-            subtitle: 'Crypto Warden will save your seed phrase in your personal Apple iCloud Keychain, NOT in our server.',
+            title: 'Choose your Security Configuration',
+            subtitle: 'All solutions we offer are encrypted and secure. Check our Security Model for more details.',
         },
         {
             backgroundColor: '#fff',
             image: <Image style={styles().image} source={ONBOARDING4} />,
             title: 'Need to reactivate your wallet?',
-            subtitle: 'Open Crypto Warden and copy your saved seed phrase to restore your wallet.',
+            subtitle: 'Open Crypto Warden and tap to copy your seed phrase to restore your wallet.',
         }
     ]
 
-    return <StableSafeArea>
+    return <StableSafeArea bg='#fff'>
         <Onboarding
             imageContainerStyles={{ flex: 1 }}
-            containerStyles={{ padding: 0, margin: 0, backgroundColor: '#fff',  }}
+            containerStyles={{ padding: 0, margin: 0, backgroundColor: '#fff', }}
             titleStyles={{ padding: 0, margin: 0, fontSize: 24, fontWeight: '500' }}
-            subTitleStyles={{ padding: 0, margin: 0, marginBottom: 170, }}
+            subTitleStyles={{ padding: 0, margin: 0, marginBottom: 80, }}
             onDone={() => navigation.goBack()}
             onSkip={() => navigation.goBack()}
             pages={onboardingPages}
