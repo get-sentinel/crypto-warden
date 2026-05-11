@@ -1,80 +1,79 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * Generated with the TypeScript template
- * https://github.com/react-native-community/react-native-template-typescript
- *
- * @format
- */
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { useTheme } from '@ui-kitten/components';
+import { useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
-
-import React, { useEffect } from 'react';
+import { PAGES } from './utils/constants';
+import { getToastConfig } from './config/ToastConfig';
+import LockScreen from './components/LockScreen';
 
 import Home from './pages/Home';
-import Add from './pages/AddWallet';
+import AddWallet from './pages/AddWallet';
 import Settings from './pages/Settings';
-import { NavigationContainer } from '@react-navigation/native';
-import { useTheme } from "@ui-kitten/components";
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { PAGES, TAB_ICON_SIZE } from './utils/constants';
-import { configureStore } from '@reduxjs/toolkit'
-import walletSlice from './redux/WalletSlice'
-import accountSlice from './redux/AccountSlice'
 import WalletDetails from './pages/WalletDetails';
 import OnboardingCarousel from './pages/OnboardingCarousel';
 import Paywall from './pages/Paywall';
-import Toast from 'react-native-toast-message';
-import { getToastConfig } from './config/ToastConfig';
-import { createStackNavigator } from '@react-navigation/stack';
+
+const Stack = createStackNavigator();
+const ONBOARDING_COMPLETED_KEY = '@onboarding_completed';
 
 const Navigator = () => {
+  const theme = useTheme();
+  const isLocked = useSelector((state: any) => state.settingsSlice.isLocked);
+  const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
-    const Stack = createStackNavigator();
-    const theme = useTheme()
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY).then(val => {
+      setInitialRoute(val ? PAGES.HOME : PAGES.ONBOARDING);
+    });
+  }, []);
 
-    return (
-        <NavigationContainer>
-            <Stack.Navigator>
-                <Stack.Screen
-                    name={PAGES.HOME}
-                    component={Home}
-                    options={{ headerShown: false }} />
-                <Stack.Screen
-                    key={PAGES.ADD}
-                    name={PAGES.ADD}
-                    component={Add}
-                    options={{ headerShown: false, presentation: 'modal' }}
-                />
-                <Stack.Screen
-                    key={PAGES.SETTINGS}
-                    name={PAGES.SETTINGS}
-                    component={Settings}
-                    options={{ headerShown: false, presentation: 'modal' }}
-                />
-                <Stack.Screen
-                    key={PAGES.WALLET_DETAILS}
-                    name={PAGES.WALLET_DETAILS}
-                    component={WalletDetails}
-                    options={{ headerShown: false, presentation: 'modal' }}
-                />
-                <Stack.Screen
-                    key={PAGES.ONBOARDING}
-                    name={PAGES.ONBOARDING}
-                    component={OnboardingCarousel}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    key={PAGES.PAYWALL}
-                    name={PAGES.PAYWALL}
-                    component={Paywall}
-                    options={{ headerShown: false, presentation: 'modal' }}
-                />
-            </Stack.Navigator>
-            <Toast config={getToastConfig(theme)} />
-        </NavigationContainer>
-    );
+  if (!initialRoute) return null;
+
+  return (
+    <>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName={initialRoute}>
+          <Stack.Screen
+            name={PAGES.HOME}
+            component={Home}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={PAGES.ADD}
+            component={AddWallet}
+            options={{ headerShown: false, presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name={PAGES.SETTINGS}
+            component={Settings}
+            options={{ headerShown: false, presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name={PAGES.WALLET_DETAILS}
+            component={WalletDetails}
+            options={{ headerShown: false, presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name={PAGES.ONBOARDING}
+            component={OnboardingCarousel}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={PAGES.PAYWALL}
+            component={Paywall}
+            options={{ headerShown: false, presentation: 'modal' }}
+          />
+        </Stack.Navigator>
+        <Toast config={getToastConfig(theme)} />
+      </NavigationContainer>
+
+      {isLocked && <LockScreen />}
+    </>
+  );
 };
 
 export default Navigator;
-

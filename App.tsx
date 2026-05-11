@@ -1,65 +1,95 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * Generated with the TypeScript template
- * https://github.com/react-native-community/react-native-template-typescript
- *
- * @format
- */
-
-
-import React, { useEffect } from 'react';
-
+import React, { useEffect, useRef } from 'react';
+import { AppState, AppStateStatus, useColorScheme } from 'react-native';
 import * as eva from '@eva-design/eva';
 import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
-import Home from './src/pages/Home';
-import Add from './src/pages/AddWallet';
-import Settings from './src/pages/Settings';
-import { NavigationContainer } from '@react-navigation/native';
-import { useTheme } from "@ui-kitten/components";
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { PAGES, TAB_ICON_SIZE } from './src/utils/constants';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit'
-import walletSlice from './src/redux/WalletSlice'
-import accountSlice from './src/redux/AccountSlice'
-import { default as light } from './src/themes/light.json';
-import { default as dark } from './src/themes/dark.json';
-import { useColorScheme } from 'react-native';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
-import WalletDetails from './src/pages/WalletDetails';
-import OnboardingCarousel from './src/pages/OnboardingCarousel';
-import Paywall from './src/pages/Paywall';
-import Toast, { BaseToast } from 'react-native-toast-message';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
+import walletReducer from './src/redux/WalletSlice';
+import accountReducer from './src/redux/AccountSlice';
+import settingsReducer, { loadSettingsAsync, setLocked, updateLastActive } from './src/redux/SettingsSlice';
+import { ThemeMode } from './src/types/settings.types';
+
+import { default as light } from './src/themes/light.json';
+import { default as dark } from './src/themes/dark.json';
 import Navigator from './src/Navigator';
 
 const store = configureStore({
   reducer: {
-    walletSlice: walletSlice,
-    accountSlice: accountSlice
+    walletSlice: walletReducer,
+    accountSlice: accountReducer,
+    settingsSlice: settingsReducer,
   },
-  middleware: (getDefaultMiddleware) =>
+  middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,
     }),
-})
+});
+
+/** Watches AppState to trigger biometric re-lock after inactivity. */
+function AppStateWatcher() {
+  const dispatch = useDispatch();
+  const biometricEnabled = useSelector((state: any) => state.settingsSlice.biometricEnabled);
+  const inactivityTimeoutSeconds = useSelector((state: any) => state.settingsSlice.inactivityTimeoutSeconds);
+  const lastActiveTimestamp = useSelector((state: any) => state.settingsSlice.lastActiveTimestamp);
+  const backgroundedAt = useRef<number>(0);
+
+  useEffect(() => {
+    dispatch(loadSettingsAsync() as any);
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        backgroundedAt.current = Date.now();
+        dispatch(updateLastActive());
+      } else if (nextState === 'active') {
+        if (
+          biometricEnabled &&
+          inactivityTimeoutSeconds > 0 &&
+          backgroundedAt.current > 0
+        ) {
+          const elapsed = (Date.now() - backgroundedAt.current) / 1000;
+          if (elapsed >= inactivityTimeoutSeconds) {
+            dispatch(setLocked(true));
+          }
+        }
+        backgroundedAt.current = 0;
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [dispatch, biometricEnabled, inactivityTimeoutSeconds, lastActiveTimestamp]);
+
+  return null;
+}
+
+function AppThemed() {
+  const colorScheme = useColorScheme();
+  const themeMode: ThemeMode = useSelector((state: any) => state.settingsSlice.themeMode ?? 'system');
+  const isDark = themeMode === 'system' ? colorScheme === 'dark' : themeMode === 'dark';
+
+  return (
+    <ApplicationProvider
+      {...eva}
+      theme={isDark ? { ...dark } : { ...light }}
+    >
+      <AppStateWatcher />
+      <Navigator />
+    </ApplicationProvider>
+  );
+}
 
 const App = () => {
-
-  const Stack = createNativeStackNavigator();
-
   return (
     <>
       <IconRegistry icons={EvaIconsPack} />
       <Provider store={store}>
         <SafeAreaProvider>
-          <ApplicationProvider {...eva}
-            theme={useColorScheme() === 'dark' ? { ...dark } : { ...light }}>
-            <Navigator />
-          </ApplicationProvider>
+          <AppThemed />
         </SafeAreaProvider>
       </Provider>
     </>
@@ -67,4 +97,3 @@ const App = () => {
 };
 
 export default App;
-

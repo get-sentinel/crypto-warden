@@ -1,100 +1,139 @@
 import { Dispatch } from 'redux';
-import Wallet from '../class/Wallet';
+import { WalletData } from '../types/wallet.types';
 import { loadWallets } from '../redux/WalletSlice';
 import { KEYCHAIN_PATHS } from '../utils/constants';
-import { getMaxNumberFromArray } from '../utils/utils';
-import { NativeModules } from "react-native";
+import { migrateWallet } from '../utils/walletFactory';
+import { NativeModules } from 'react-native';
+import * as Keychain from 'react-native-keychain';
 
 const { KeychainWrapper } = NativeModules;
 
-export const setValueForKey = (key: string, value: string, synchronizable: boolean) => {
-    return KeychainWrapper.setValueForKey(value, key, synchronizable)
-}
+const BIOMETRIC_SERVICE = 'cryptowarden.biometric';
 
-export const getValueForKey = (key: string, synchronizable: boolean) => {
-    return KeychainWrapper.getValueForKey(key, synchronizable)
-}
-
-export const setWalletsToKeychain = (localWallets: Wallet[], synchronizable: boolean = false) => {
-
-    var walletsToSave = localWallets
-
-    if (synchronizable) {
-        let remoteWallets = getWalletsFromKeychain({ synchronizable: synchronizable })
-        walletsToSave = mergeWallets(localWallets, remoteWallets);
-    }
-
-    let unwrappedWallets = walletsToSave.map(wallet => wallet.getWallet())
-    let stringifiedWallets = JSON.stringify(unwrappedWallets)
-    return setValueForKey(KEYCHAIN_PATHS.WALLETS, stringifiedWallets, synchronizable)
-}
-
-export const getWalletsFromKeychain = ({ synchronizable = true }: { synchronizable?: boolean }) => {
-    const value = getValueForKey(KEYCHAIN_PATHS.WALLETS, synchronizable);
-    if (!value || value === '[]' || value === '') {
-        console.log('Keychain is empty');
-        return []
-    }
-
-    const remoteWallets: Wallet[] = JSON.parse(value);
-
-    // Correct any missing ids to avoid errors during updates
-    const updatedRemoteWallets = remoteWallets.map((wallet) => ({
-        ...wallet,
-        id: wallet.id || Math.max(...Array.from(remoteWallets, (w) => w.id ?? 0)) + 1,
-    }));
-
-    // Map to wallet class objects
-    const remoteWalletInstances = updatedRemoteWallets.map((wallet) => new Wallet({
-        provider: wallet.provider,
-        seed: wallet.seed,
-        name: wallet.name,
-        address: wallet.address,
-        password: wallet.password,
-        id: wallet.id,
-        isDeleted: wallet.isDeleted,
-        createDate: wallet.createDate,
-        updateDate: wallet.updateDate,
-    }));
-
-    return remoteWalletInstances
+export const storeBiometricSentinel = async (): Promise<boolean> => {
+  try {
+    await Keychain.setGenericPassword('biometric', 'authorized', {
+      service: BIOMETRIC_SERVICE,
+      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
+    });
+    return true;
+  } catch {
+    return false;
+  }
 };
 
-export const fetchWallets = ({ dispatch, synchronizable, localWallets = [] }: { dispatch: Dispatch<any>, synchronizable?: boolean, localWallets?: Wallet[] }) => {
-    let remoteWallets = getWalletsFromKeychain({ synchronizable: synchronizable })
+export const removeBiometricSentinel = async (): Promise<void> => {
+  try {
+    await Keychain.resetGenericPassword({ service: BIOMETRIC_SERVICE });
+  } catch {}
+};
 
-    if (localWallets?.length > 0) {
-        const mergedWallets = mergeWallets(localWallets, remoteWallets);
-        dispatch(loadWallets(mergedWallets));
-        return;
+export const authenticateWithBiometrics = async (): Promise<boolean> => {
+  try {
+    const result = await Keychain.getGenericPassword({
+      service: BIOMETRIC_SERVICE,
+      authenticationPrompt: {
+        title: 'Unlock CryptoWarden',
+        description: 'Authenticate to access your wallets',
+      },
+    });
+    return !!result;
+  } catch {
+    return false;
+  }
+};
+
+export const setValueForKey = (
+  key: string,
+  value: string,
+  synchronizable: boolean,
+): Promise<number> => KeychainWrapper.setValueForKey(value, key, synchronizable);
+
+export const getValueForKey = (
+  key: string,
+  synchronizable: boolean,
+): string => KeychainWrapper.getValueForKey(key, synchronizable);
+
+export const setWalletsToKeychain = (
+  localWallets: WalletData[],
+  synchronizable: boolean = false,
+): void => {
+  let walletsToSave = localWallets;
+
+  if (synchronizable) {
+    const remoteWallets = getWalletsFromKeychain({ synchronizable });
+    walletsToSave = mergeWallets(localWallets, remoteWallets);
+  }
+
+  // WalletData is a plain serializable object — no .getWallet() needed
+  const serialized = JSON.stringify(walletsToSave);
+  setValueForKey(KEYCHAIN_PATHS.WALLETS, serialized, synchronizable);
+};
+
+export const getWalletsFromKeychain = ({
+  synchronizable = true,
+}: {
+  synchronizable?: boolean;
+}): WalletData[] => {
+  const value = getValueForKey(KEYCHAIN_PATHS.WALLETS, synchronizable);
+  if (!value || value === '[]' || value === '') return [];
+
+  try {
+    const raw: any[] = JSON.parse(value);
+    // Migrate each entry: handles legacy Wallet class objects and adds new fields with defaults
+    return raw.map(migrateWallet);
+  } catch {
+    return [];
+  }
+};
+
+export const fetchWallets = ({
+  dispatch,
+  synchronizable,
+  localWallets = [],
+}: {
+  dispatch: Dispatch<any>;
+  synchronizable?: boolean;
+  localWallets?: WalletData[];
+}): void => {
+  const remoteWallets = getWalletsFromKeychain({ synchronizable });
+
+  if (localWallets.length > 0) {
+    dispatch(loadWallets(mergeWallets(localWallets, remoteWallets)));
+    return;
+  }
+
+  dispatch(loadWallets(remoteWallets));
+};
+
+/**
+ * Merges local and remote wallet arrays by comparing updateDate.
+ * Matches wallets first by seedHash (new), then by seed string (legacy fallback).
+ * The newer version of a duplicate is kept.
+ */
+const mergeWallets = (local: WalletData[], remote: WalletData[]): WalletData[] => {
+  const merged: WalletData[] = [];
+
+  for (const remoteWallet of remote) {
+    const match = local.find(
+      lw => lw.seedHash === remoteWallet.seedHash || lw.seed === remoteWallet.seed,
+    );
+    if (match && new Date(match.updateDate) > new Date(remoteWallet.updateDate)) {
+      merged.push(match);
+    } else {
+      merged.push(remoteWallet);
     }
+  }
 
-    dispatch(loadWallets(remoteWallets));
-}
-
-
-const mergeWallets = (local: Wallet[], remote: Wallet[]): Wallet[] => {
-    const mergedWallets: Wallet[] = [];
-
-    // First add all wallets from the remote array
-    for (const remoteWallet of remote) {
-        const matchingLocalWallet = local.find(localWallet => localWallet.seed === remoteWallet.seed);
-        if (matchingLocalWallet && new Date(matchingLocalWallet.updateDate) > new Date(remoteWallet.updateDate)) {
-            // Keep the local wallet if it's more updated
-            mergedWallets.push(matchingLocalWallet);
-        } else {
-            // Otherwise, add the remote wallet
-            mergedWallets.push(remoteWallet);
-        }
+  for (const localWallet of local) {
+    const alreadyMerged = merged.find(
+      mw => mw.seedHash === localWallet.seedHash || mw.seed === localWallet.seed,
+    );
+    if (!alreadyMerged) {
+      merged.push(localWallet);
     }
+  }
 
-    // Then add all remaining wallets from the local array
-    for (const localWallet of local) {
-        const matchingMergedWallet = mergedWallets.find(mergedWallet => mergedWallet.seed === localWallet.seed);
-        if (!matchingMergedWallet) {
-            mergedWallets.push(localWallet);
-        }
-    }
-
-    return mergedWallets;
-}
+  return merged;
+};
