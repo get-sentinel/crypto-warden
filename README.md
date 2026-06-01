@@ -4,8 +4,18 @@
 
 # Crypto Warden
 Crypto Warden is an app to securely store your crypto wallet seed phrases.
-It works by leveraging your personal Apple Keychain in order to save your data and share it across all your Apple devices.
-Data never flow outside of the keychain, you can checkout our security model here: [link](https://getsentinel.io/security-model)
+
+On Apple devices it leverages your personal Apple Keychain to save your data and sync it across all your Apple devices. On Android, data is stored locally inside the Android Keystore (AES-256 encrypted `EncryptedSharedPreferences`). In both cases your data never flows outside of the secure store on device — you can check out our security model here: [link](https://getsentinel.io/security-model)
+
+## Features
+- **Secure storage** — seed phrases are kept in the Apple Keychain (iOS/macOS) or the Android Keystore, never in plain text.
+- **Blockchain networks** — assign a network to each wallet (Ethereum, Bitcoin, Solana, Polygon, BNB, Avalanche, Arbitrum, Optimism, Base, Cosmos, Sui, Aptos, Near, Tron, Fantom, Terra, and more) with recognizable chain icons.
+- **BIP-39 validation** — seed entry is validated against the BIP-39 standard (word count, wordlist, and checksum) so typos are caught before saving.
+- **Tags & notes** — organize wallets with custom tags, filter your list by tag, and attach free-form notes.
+- **Duplicate detection** — get warned if you try to save a recovery phrase you've already stored.
+- **Encrypted backup & restore** — export your wallets to a password-protected, encrypted `.warden` file and import them back on any device (including across platforms).
+- **Light & dark themes.**
+- **URL integration** — programmatically ingest wallets from other apps (see below).
 
 ## Value Proposition
 To begin with, it is widely accepted that non-custodial wallets should be used by all crypto users instead of keeping their crypto on exchanges. However, managing seed phrases can be challenging and may create an entry barrier for the adoption of crypto, in my opinion.
@@ -44,9 +54,20 @@ If you want to test it on the iOS simulator run:
 xcrun simctl openurl booted "cryptowarden://Main%20Wallet?seed=water2%20house%20magic%20panda%20light%20bear%20sky%20nine%20field%20mine%20tank%20watch&password=38926g4287tviy3t&provider=metamask"
 ```
 
+When a wallet is received via URL, Crypto Warden surfaces a confirmation dialog before saving and warns you if the same seed phrase already exists.
+
+## Encrypted backup & restore
+You can export all your wallets to a password-protected, encrypted file (`.warden`) and import it later on the same or another device. The file is encrypted with AES-256-CBC using a PBKDF2-derived key and protected with an HMAC.
+
+A standalone Node script is provided to decrypt an export outside the app (uses only Node built-ins, no dependencies):
+```sh
+node scripts/decrypt-warden.js <file.warden> -o out.json
+```
+
 ## Where to download
 You can download the app directly from the [App Store](https://apps.apple.com/us/app/crypto-warden/id1663191731) for iOS and macOS.
-The Android version is still not here. If you have proposal on how to securely sync data between iOS and Android let's discuss it.
+
+An Android build is now available in this repository. Note that Apple Keychain sync only works across Apple devices; to move data between iOS and Android (or to any new device), use the encrypted backup & restore feature described above.
 
 More details and all the features can be found at this [link](https://getsentinel.io/crypto-warden).
 
