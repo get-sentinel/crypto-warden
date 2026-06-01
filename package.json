@@ -34,6 +34,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.20.2",
     "react-native-haptic-feedback": "^2.2.0",
+    "react-native-in-app-review": "^4.4.2",
     "react-native-keychain": "^9.1.0",
     "react-native-modal": "^13.0.0",
     "react-native-purchases": "^8.2.2",

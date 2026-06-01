@@ -69,3 +69,8 @@ buck-out/
 /ios/Google*
 /ios/crypto-warden.xcworkspace/contents.*
 /ios/Constants.swift
+/android/app/src/main/java/com/seedwarden/Constants.java
+
+# Sensitive config files that must not be committed
+/android/app/google-services.json
+/src/config/GoogleSignIn.json

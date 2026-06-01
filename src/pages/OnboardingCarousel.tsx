@@ -3,24 +3,20 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Text, useTheme } from '@ui-kitten/components';
+import { Text, useTheme } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
-import {
-  DEFAULT_2x_MARGIN,
-  DEFAULT_3x_MARGIN,
-  DEFAULT_CORNER_RADIUS,
-  TOAST_POSITION,
-  BUTTON_FONT_SIZE,
-} from '../utils/constants';
+import RatingPromptModal from '../components/modals/RatingPromptModal';
+import { PAGES, TOAST_POSITION } from '../utils/constants';
 import {
   signInWithAppleCredentials,
   signInWithGoogle,
@@ -29,9 +25,6 @@ import {
 } from '../firebase/firebaseAuth';
 
 import ONBOARDING1 from '../assets/onboarding/onboarding1.png';
-import ONBOARDING2 from '../assets/onboarding/onboarding2.png';
-import ONBOARDING3 from '../assets/onboarding/onboarding3.png';
-import ONBOARDING4 from '../assets/onboarding/onboarding4.png';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,7 +34,8 @@ type SlideType = 'info' | 'signin';
 
 interface InfoSlide {
   type: 'info';
-  image: any;
+  image?: any;
+  icon?: string;
   title: string;
   subtitle: string;
 }
@@ -59,19 +53,19 @@ const SLIDES: Slide[] = [
   },
   {
     type: 'info',
-    image: ONBOARDING2,
+    icon: 'flash-outline',
     title: 'Copy in seconds',
     subtitle: 'Retrieve any saved seed phrase instantly — no digging through paper backups.',
   },
   {
     type: 'info',
-    image: ONBOARDING3,
-    title: 'iCloud Keychain protected',
-    subtitle: 'Your seed phrases are encrypted in your personal iCloud Keychain — never on our servers.',
+    icon: 'shield-lock-outline',
+    title: 'Encrypted on your device',
+    subtitle: 'Your seed phrases are stored in your device’s secure keystore — never on our servers.',
   },
   {
     type: 'info',
-    image: ONBOARDING4,
+    icon: 'backup-restore',
     title: 'Restore any time',
     subtitle: 'Need to recover a wallet? Open CryptoWarden, copy your seed phrase, and restore in seconds.',
   },
@@ -94,10 +88,13 @@ export default function OnboardingCarousel() {
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ratingVisible, setRatingVisible] = useState(false);
 
   const infoSlides = SLIDES.filter(s => s.type === 'info') as InfoSlide[];
   const isLastInfoSlide = activeIndex === infoSlides.length - 1;
   const isSignInSlide = activeIndex === SLIDES.length - 1;
+
+  const primary = theme['color-primary-500'];
 
   const handleNext = () => {
     const next = activeIndex + 1;
@@ -107,7 +104,15 @@ export default function OnboardingCarousel() {
 
   const completeOnboarding = async () => {
     await markOnboardingComplete();
-    navigation.replace('home');
+    setRatingVisible(true);
+  };
+
+  const handleRatingDismissed = () => {
+    setRatingVisible(false);
+    navigation.reset({
+      index: 1,
+      routes: [{ name: PAGES.HOME }, { name: PAGES.PAYWALL }],
+    });
   };
 
   const handleAppleSignIn = async () => {
@@ -121,7 +126,13 @@ export default function OnboardingCarousel() {
 
   const handleEmailAuth = async () => {
     if (!emailInput.trim() || !passwordInput.trim()) {
-      Toast.show({ type: 'error', position: TOAST_POSITION, text1: 'Fill in all fields', visibilityTime: 2000, props: { iconName: 'alert' } });
+      Toast.show({
+        type: 'error',
+        position: TOAST_POSITION,
+        text1: 'Fill in all fields',
+        visibilityTime: 2000,
+        props: { iconName: 'alert' },
+      });
       return;
     }
     setLoading(true);
@@ -146,75 +157,131 @@ export default function OnboardingCarousel() {
     }
   };
 
+  // ── Slide renderers ──────────────────────────────────────────────────────────
+
   const renderInfoSlide = (item: InfoSlide) => (
     <View style={styles.slide}>
-      <Image source={item.image} style={styles.image} resizeMode="contain" />
-      <Text style={[styles.title, { color: theme['text-basic-color'] }]}>{item.title}</Text>
-      <Text style={[styles.subtitle, { color: theme['text-hint-color'] }]}>{item.subtitle}</Text>
+      {/* Hero illustration with concentric halo */}
+      <View style={styles.heroContainer}>
+        <View style={[styles.haloOuter, { backgroundColor: primary + '0A' }]} />
+        <View style={[styles.haloMid,   { backgroundColor: primary + '14' }]} />
+        <View style={[styles.haloInner, { backgroundColor: primary + '1F' }]} />
+        {item.image ? (
+          <Image source={item.image} style={styles.heroImage} resizeMode="contain" />
+        ) : (
+          <View style={[styles.iconBadge, { backgroundColor: primary }]}>
+            <MaterialCommunityIcons name={item.icon!} size={72} color="#fff" />
+          </View>
+        )}
+      </View>
+
+      <View style={styles.copyContainer}>
+        <Text style={[styles.title, { color: theme['text-basic-color'] }]}>
+          {item.title}
+        </Text>
+        <Text style={[styles.subtitle, { color: theme['text-hint-color'] }]}>
+          {item.subtitle}
+        </Text>
+      </View>
     </View>
   );
 
   const renderSignInSlide = () => (
     <View style={styles.slide}>
-      <View style={styles.signInHeader}>
-        <View style={[styles.signInIconCircle, { backgroundColor: theme['color-primary-600'] }]}>
-          <MaterialCommunityIcons name="shield-check" size={40} color={theme['color-primary-500']} />
+      <View style={styles.signInTop}>
+        <View style={[styles.shieldCircle, { backgroundColor: primary + '1F' }]}>
+          <View style={[styles.shieldCircleInner, { backgroundColor: primary + '33' }]}>
+            <MaterialCommunityIcons name="shield-check" size={36} color={primary} />
+          </View>
         </View>
+
         <Text style={[styles.title, { color: theme['text-basic-color'] }]}>
-          {emailMode ? (isSignup ? 'Create Account' : 'Sign In') : 'Get Started'}
+          {emailMode ? (isSignup ? 'Create account' : 'Welcome back') : 'You\'re all set'}
         </Text>
         <Text style={[styles.subtitle, { color: theme['text-hint-color'] }]}>
           {emailMode
             ? 'Sign in to sync your Premium subscription across devices.'
-            : 'Create an account to sync your Premium across devices — or skip and get started now.'}
+            : 'Sign in to sync Premium across devices — or skip and start using CryptoWarden right away.'}
         </Text>
       </View>
 
       {!emailMode ? (
-        <View style={styles.signInButtons}>
-          {/* Apple */}
-          <TouchableOpacity
-            style={[styles.socialButton, { backgroundColor: theme['color-basic-900'] }]}
-            onPress={handleAppleSignIn}
-          >
-            <MaterialCommunityIcons name="apple" size={20} color="#fff" style={styles.socialIcon} />
-            <Text style={styles.socialButtonText}>Continue with Apple</Text>
-          </TouchableOpacity>
+        <View style={styles.signInActions}>
+          {/* Apple — primary */}
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={[styles.primaryAuthBtn, { backgroundColor: '#000000' }]}
+              onPress={handleAppleSignIn}
+              activeOpacity={0.85}
+            >
+              <MaterialCommunityIcons name="apple" size={20} color="#fff" />
+              <Text style={styles.primaryAuthText}>Continue with Apple</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Google */}
           <TouchableOpacity
-            style={[styles.socialButton, { backgroundColor: theme['color-basic-600'], borderWidth: 1, borderColor: theme['card-border-color'] }]}
+            style={[
+              styles.secondaryAuthBtn,
+              {
+                backgroundColor: theme['color-basic-600'],
+                borderColor: theme['card-border-color'],
+              },
+            ]}
             onPress={async () => {
               try {
                 await signInWithGoogle();
               } catch {
-                // User cancelled or error — still allow continuing
+                // User cancelled — still proceed
               }
               completeOnboarding();
             }}
+            activeOpacity={0.85}
           >
-            <MaterialCommunityIcons name="google" size={20} color="#EA4335" style={styles.socialIcon} />
-            <Text style={[styles.socialButtonText, { color: theme['text-basic-color'] }]}>Continue with Google</Text>
+            <MaterialCommunityIcons name="google" size={20} color="#EA4335" />
+            <Text style={[styles.secondaryAuthText, { color: theme['text-basic-color'] }]}>
+              Continue with Google
+            </Text>
           </TouchableOpacity>
 
-          {/* Email */}
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: theme['card-border-color'] }]} />
+            <Text style={[styles.dividerText, { color: theme['text-hint-color'] }]}>or</Text>
+            <View style={[styles.dividerLine, { backgroundColor: theme['card-border-color'] }]} />
+          </View>
+
+          {/* Email — tertiary */}
           <TouchableOpacity
-            style={[styles.socialButton, { backgroundColor: theme['color-primary-500'] }]}
+            style={[styles.ghostAuthBtn, { borderColor: theme['card-border-color'] }]}
             onPress={() => setEmailMode(true)}
+            activeOpacity={0.7}
           >
-            <MaterialCommunityIcons name="email-outline" size={20} color="#fff" style={styles.socialIcon} />
-            <Text style={styles.socialButtonText}>Continue with Email</Text>
+            <MaterialCommunityIcons
+              name="email-outline"
+              size={20}
+              color={theme['text-basic-color']}
+            />
+            <Text style={[styles.secondaryAuthText, { color: theme['text-basic-color'] }]}>
+              Continue with email
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.skipButton} onPress={completeOnboarding}>
-            <Text style={[styles.skipText, { color: theme['text-hint-color'] }]}>Skip for now</Text>
+          <TouchableOpacity style={styles.skipLink} onPress={completeOnboarding}>
+            <Text style={[styles.skipLinkText, { color: theme['text-hint-color'] }]}>
+              Skip for now
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.signInButtons}>
+        <View style={styles.signInActions}>
           <TouchableOpacity style={styles.backRow} onPress={() => setEmailMode(false)}>
-            <MaterialCommunityIcons name="arrow-left" size={18} color={theme['text-hint-color']} />
-            <Text style={[styles.skipText, { color: theme['text-hint-color'], marginLeft: 4 }]}>Back</Text>
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={18}
+              color={theme['text-hint-color']}
+            />
+            <Text style={[styles.backRowText, { color: theme['text-hint-color'] }]}>Back</Text>
           </TouchableOpacity>
 
           <TextInput
@@ -224,11 +291,13 @@ export default function OnboardingCarousel() {
             onChangeText={setEmailInput}
             keyboardType="email-address"
             autoCapitalize="none"
-            style={[styles.emailInput, {
-              backgroundColor: theme['color-basic-600'],
-              color: theme['text-basic-color'],
-              borderColor: theme['card-border-color'],
-            }]}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme['color-basic-600'],
+                color: theme['text-basic-color'],
+              },
+            ]}
           />
           <TextInput
             placeholder="Password"
@@ -236,25 +305,28 @@ export default function OnboardingCarousel() {
             value={passwordInput}
             onChangeText={setPasswordInput}
             secureTextEntry
-            style={[styles.emailInput, {
-              backgroundColor: theme['color-basic-600'],
-              color: theme['text-basic-color'],
-              borderColor: theme['card-border-color'],
-            }]}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme['color-basic-600'],
+                color: theme['text-basic-color'],
+              },
+            ]}
           />
 
           <TouchableOpacity
-            style={[styles.socialButton, { backgroundColor: theme['color-primary-500'] }]}
+            style={[styles.primaryAuthBtn, { backgroundColor: primary }]}
             onPress={handleEmailAuth}
             disabled={loading}
+            activeOpacity={0.85}
           >
-            <Text style={styles.socialButtonText}>
-              {loading ? 'Please wait…' : isSignup ? 'Create Account' : 'Sign In'}
+            <Text style={styles.primaryAuthText}>
+              {loading ? 'Please wait…' : isSignup ? 'Create account' : 'Sign in'}
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.skipButton} onPress={() => setIsSignup(!isSignup)}>
-            <Text style={[styles.skipText, { color: theme['color-primary-500'] }]}>
+          <TouchableOpacity style={styles.skipLink} onPress={() => setIsSignup(!isSignup)}>
+            <Text style={[styles.skipLinkText, { color: primary }]}>
               {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </Text>
           </TouchableOpacity>
@@ -263,15 +335,31 @@ export default function OnboardingCarousel() {
     </View>
   );
 
+  // ── Layout ───────────────────────────────────────────────────────────────────
+
   return (
+    <>
     <StableSafeArea>
       <View style={[styles.root, { backgroundColor: theme['color-basic-500'] }]}>
-        {/* Skip (only on info slides) */}
-        {!isSignInSlide && (
-          <TouchableOpacity style={styles.skipTopButton} onPress={completeOnboarding}>
-            <Text style={[styles.skipText, { color: theme['text-hint-color'] }]}>Skip</Text>
-          </TouchableOpacity>
-        )}
+        {/* Top bar: progress + skip */}
+        <View style={styles.topBar}>
+          <View style={[styles.progressTrack, { backgroundColor: theme['color-basic-800'] }]}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: primary,
+                  width: `${((activeIndex + 1) / SLIDES.length) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+          {!isSignInSlide && (
+            <TouchableOpacity onPress={completeOnboarding} hitSlop={12}>
+              <Text style={[styles.topSkip, { color: theme['text-hint-color'] }]}>Skip</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Slides */}
         <FlatList
@@ -281,7 +369,7 @@ export default function OnboardingCarousel() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          scrollEnabled={false}
+          scrollEnabled
           renderItem={({ item }) =>
             item.type === 'info' ? renderInfoSlide(item) : renderSignInSlide()
           }
@@ -291,154 +379,248 @@ export default function OnboardingCarousel() {
           }}
         />
 
-        {/* Dots + Next button (only on info slides) */}
+        {/* Footer CTA (info slides only) */}
         {!isSignInSlide && (
           <View style={styles.footer}>
-            <View style={styles.dots}>
-              {SLIDES.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor:
-                        i === activeIndex ? theme['color-primary-500'] : theme['text-hint-color'],
-                      width: i === activeIndex ? 20 : 8,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-
             <TouchableOpacity
-              style={[styles.nextButton, { backgroundColor: theme['color-primary-500'] }]}
+              style={[styles.cta, { backgroundColor: primary }]}
               onPress={handleNext}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              <Text style={styles.nextButtonText}>
-                {isLastInfoSlide ? 'Get Started' : 'Next'}
+              <Text style={styles.ctaText}>
+                {isLastInfoSlide ? 'Get Started' : 'Continue'}
               </Text>
+              <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
       </View>
     </StableSafeArea>
+
+    <RatingPromptModal visible={ratingVisible} onClose={handleRatingDismissed} />
+    </>
   );
 }
+
+const HALO_OUTER = 380;
+const HALO_MID = 290;
+const HALO_INNER = 210;
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  skipTopButton: {
-    alignSelf: 'flex-end',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+
+  // ── Top bar ────────────────────────────────────────────────────────────────
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 14,
   },
-  skipText: {
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  topSkip: {
     fontSize: 15,
+    fontWeight: '500',
   },
+
+  // ── Slide layout ────────────────────────────────────────────────────────────
   slide: {
     width: SCREEN_WIDTH,
     flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
   },
-  image: {
-    width: '100%',
+
+  // ── Hero illustration with halo ─────────────────────────────────────────────
+  heroContainer: {
     flex: 1,
-    maxHeight: 300,
-    marginBottom: DEFAULT_3x_MARGIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  haloOuter: {
+    position: 'absolute',
+    width: HALO_OUTER,
+    height: HALO_OUTER,
+    borderRadius: HALO_OUTER / 2,
+  },
+  haloMid: {
+    position: 'absolute',
+    width: HALO_MID,
+    height: HALO_MID,
+    borderRadius: HALO_MID / 2,
+  },
+  haloInner: {
+    position: 'absolute',
+    width: HALO_INNER,
+    height: HALO_INNER,
+    borderRadius: HALO_INNER / 2,
+  },
+  heroImage: {
+    width: 260,
+    height: 260,
+  },
+  iconBadge: {
+    width: 140,
+    height: 140,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+
+  // ── Copy block ──────────────────────────────────────────────────────────────
+  copyContainer: {
+    paddingBottom: 24,
+    paddingHorizontal: 8,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: DEFAULT_2x_MARGIN,
+    letterSpacing: -0.5,
+    marginBottom: 14,
+    lineHeight: 36,
   },
   subtitle: {
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'center',
   },
+
+  // ── Footer CTA ──────────────────────────────────────────────────────────────
   footer: {
-    paddingHorizontal: 32,
-    paddingBottom: 40,
-    alignItems: 'center',
-    gap: DEFAULT_2x_MARGIN,
+    paddingHorizontal: 28,
+    paddingBottom: 32,
+    paddingTop: 8,
   },
-  dots: {
+  cta: {
     flexDirection: 'row',
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
-    gap: 6,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-  },
-  nextButton: {
-    width: '100%',
-    height: 52,
-    borderRadius: DEFAULT_CORNER_RADIUS,
     justifyContent: 'center',
-    alignItems: 'center',
+    gap: 8,
   },
-  nextButtonText: {
+  ctaText: {
     color: '#fff',
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
-  // Sign-in slide
-  signInHeader: {
+
+  // ── Sign-in slide ───────────────────────────────────────────────────────────
+  signInTop: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: DEFAULT_3x_MARGIN,
+    paddingTop: 24,
+    paddingBottom: 28,
   },
-  signInIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  shieldCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: DEFAULT_2x_MARGIN,
+    marginBottom: 20,
   },
-  signInButtons: {
-    width: '100%',
-    paddingBottom: 40,
+  shieldCircleInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  socialButton: {
+  signInActions: {
+    paddingBottom: 32,
+    gap: 12,
+  },
+  primaryAuthBtn: {
     flexDirection: 'row',
+    height: 54,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 52,
-    borderRadius: DEFAULT_CORNER_RADIUS,
-    marginBottom: 12,
-    paddingHorizontal: 16,
+    gap: 10,
   },
-  socialIcon: {
-    position: 'absolute',
-    left: 16,
-  },
-  socialButtonText: {
+  primaryAuthText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  skipButton: {
+  secondaryAuthBtn: {
+    flexDirection: 'row',
+    height: 54,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  secondaryAuthText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  ghostAuthBtn: {
+    flexDirection: 'row',
+    height: 54,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: 'transparent',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  skipLink: {
     alignItems: 'center',
     paddingVertical: 12,
+    marginTop: 4,
+  },
+  skipLinkText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingVertical: 8,
+    marginBottom: 4,
   },
-  emailInput: {
-    height: 50,
-    borderWidth: 1,
-    borderRadius: DEFAULT_CORNER_RADIUS,
-    paddingHorizontal: 14,
+  backRowText: {
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  input: {
+    height: 54,
+    borderRadius: 14,
+    paddingHorizontal: 16,
     fontSize: 16,
-    marginBottom: 12,
   },
 });

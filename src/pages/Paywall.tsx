@@ -105,6 +105,10 @@ const Paywall = React.memo(() => {
                     : undefined
             }
 
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                <MaterialCommunityIcons onPress={goBack} name="close" size={25} color={theme['text-basic-color']} />
+            </View>
+
             <View style={{ height: 55, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: DEFAULT_2x_MARGIN }}>
                 <Text style={{ fontSize: 32, fontWeight: '700', color: theme['text-basic-color'] }}> Crypto Warden </Text>
                 <View style={{ padding: 4, backgroundColor: 'rgb(249,222,82)', borderRadius: DEFAULT_CORNER_RADIUS }}>
@@ -126,7 +130,7 @@ const Paywall = React.memo(() => {
 
                 <PaywallFeatureCell
                     featureTitle="Device Sync"
-                    featureDescription="Sync automatically on all your devices via iCloud Keychain."
+                    featureDescription="Sync automatically across all your devices, encrypted end-to-end."
                 />
 
                 <Divider style={styles().divider} />

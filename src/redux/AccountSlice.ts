@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const accountSlice = createSlice({
-    name: 'wallets',
+    name: 'accounts',
     initialState: {
         premium: false,
         authenticated: false,

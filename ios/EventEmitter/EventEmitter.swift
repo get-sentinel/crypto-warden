@@ -12,7 +12,7 @@ open class EventEmitter: RCTEventEmitter {
 
   public static var emitter: RCTEventEmitter!
   
-  @objc public override static func requiresMainQueueSetup() -> Bool {return true}
+  @objc public override static func requiresMainQueueSetup() -> Bool { return false }
 
   override init() {
     super.init()

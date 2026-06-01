@@ -3,6 +3,7 @@ import {
   Image,
   ImageBackground,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import InAppReview from 'react-native-in-app-review';
 import { Button, Card, Divider, Icon, Text, TopNavigation, useTheme } from '@ui-kitten/components';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -26,6 +28,7 @@ import SettingsCell from '../components/cells/SettingsCell';
 import ExportModal from '../components/modals/ExportModal';
 import {
   APP_STORE_IOS_ID,
+  PLAY_STORE_ANDROID_ID,
   BUTTON_FONT_SIZE,
   DEFAULT_2x_MARGIN,
   DEFAULT_CORNER_RADIUS,
@@ -78,14 +81,37 @@ const Settings = () => {
 
   const currentSettings = (): AppSettings => ({ biometricEnabled, inactivityTimeoutSeconds, themeMode });
 
-  const rateApp = () => {
-    Linking.openURL(
-      `itms-apps://itunes.apple.com/app/id${APP_STORE_IOS_ID}?action=write-review`,
-    ).catch(() => {
+  const openStoreFallback = () => {
+    if (Platform.OS === 'ios') {
       Linking.openURL(
-        `https://apps.apple.com/app/id${APP_STORE_IOS_ID}?action=write-review`,
-      );
-    });
+        `itms-apps://itunes.apple.com/app/id${APP_STORE_IOS_ID}?action=write-review`,
+      ).catch(() => {
+        Linking.openURL(
+          `https://apps.apple.com/app/id${APP_STORE_IOS_ID}?action=write-review`,
+        );
+      });
+    } else {
+      Linking.openURL(`market://details?id=${PLAY_STORE_ANDROID_ID}`).catch(() => {
+        Linking.openURL(
+          `https://play.google.com/store/apps/details?id=${PLAY_STORE_ANDROID_ID}`,
+        );
+      });
+    }
+  };
+
+  const rateApp = async () => {
+    // Prefer the native StoreKit / Play In-App Review dialog (rating is
+    // submitted to the store without leaving the app). Fall back to the
+    // store page when the native flow isn't available.
+    try {
+      if (InAppReview.isAvailable()) {
+        await InAppReview.RequestInAppReview();
+        return;
+      }
+    } catch {
+      // fall through to the store page
+    }
+    openStoreFallback();
   };
 
   const handleBiometricToggle = async (value: boolean) => {
@@ -184,6 +210,19 @@ const Settings = () => {
       <TopNavigation
         style={[styles.topNav, { backgroundColor: theme['color-basic-500'] }]}
         title={(props: any) => <PageTitle title="Settings" props={props} />}
+        accessoryRight={() => (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={[styles.closeBtn, { backgroundColor: theme['color-basic-600'] }]}
+            hitSlop={6}
+          >
+            <MaterialCommunityIcons
+              name="close"
+              size={18}
+              color={theme['text-basic-color']}
+            />
+          </TouchableOpacity>
+        )}
       />
 
       <ScrollView
@@ -761,6 +800,13 @@ const styles = StyleSheet.create({
   topNav: {
     paddingTop: 15,
     paddingHorizontal: DEFAULT_PADDING,
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollContent: {
     paddingBottom: 50,

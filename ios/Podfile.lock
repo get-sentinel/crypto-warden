@@ -1310,6 +1310,8 @@ PODS:
     - ReactCommon/turbomodule/core
   - react-native-aes (3.3.0):
     - React-Core
+  - react-native-in-app-review (4.4.2):
+    - React-Core
   - react-native-safe-area-context (5.7.0):
     - React-Core
   - React-NativeModulesApple (0.78.3):
@@ -1778,6 +1780,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-aes (from `../node_modules/react-native-aes-crypto`)
+  - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -1924,6 +1927,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-aes:
     :path: "../node_modules/react-native-aes-crypto"
+  react-native-in-app-review:
+    :path: "../node_modules/react-native-in-app-review"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   React-NativeModulesApple:
@@ -2071,6 +2076,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 57bea44149376ecf1241dd9f02a6222adab43e57
   React-microtasksnativemodule: 2739fc8a8cb99486820c933ce560791c93be5337
   react-native-aes: 7586825f936a4ed447a0ab24ddfc70a6874ae5d4
+  react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2
   react-native-safe-area-context: 37b720094bcaa36abcd593e08f2ad16507a94769
   React-NativeModulesApple: 4849912ee050e6ae346f5789bd631570580d8b84
   React-perflogger: 069d41f741187be92ed46c6ac67add03b99f3166
@@ -2121,6 +2127,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 66a9fd80007d5d5fce19d1676ce17b4d5e16e9b1
 
-PODFILE CHECKSUM: aefd7458f8ef15d6a4717786c59ff6d429c9a0e0
+PODFILE CHECKSUM: 236fcb05c0697b0f051ba8c02241420085b8facd
 
 COCOAPODS: 1.16.2

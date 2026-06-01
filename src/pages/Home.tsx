@@ -12,8 +12,9 @@ import {
   View,
   Image,
 } from 'react-native';
-import { Button, Text, useTheme } from '@ui-kitten/components';
+import { Text, useTheme } from '@ui-kitten/components';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNModal from 'react-native-modal';
 import Purchases from 'react-native-purchases';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
@@ -22,9 +23,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 
 import { WalletData } from '../types/wallet.types';
-import { addNewWalletFromURL, getNextSorting, sortWallets } from '../utils/utils';
+import { addNewWalletFromURL, sortWallets } from '../utils/utils';
 import {
-  BUTTON_FONT_SIZE,
   DEFAULT_1x_MARGIN,
   DEFAULT_2x_MARGIN,
   DEFAULT_3x_MARGIN,
@@ -48,12 +48,12 @@ import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png';
 const { checkPremium } = require('../iap/PurchaseIAP');
 const revenueCatConfig = require('../revenueCatConfig/revenueCatConfig.json');
 
-const SORT_ICONS = [
-  'sort-calendar-ascending',
-  'sort-calendar-descending',
-  'sort-alphabetical-ascending',
-  'sort-alphabetical-descending',
-];
+const SORT_OPTIONS = [
+  { icon: 'sort-calendar-ascending',    label: 'Date (oldest first)' },
+  { icon: 'sort-calendar-descending',   label: 'Date (newest first)' },
+  { icon: 'sort-alphabetical-ascending', label: 'Name (A → Z)' },
+  { icon: 'sort-alphabetical-descending', label: 'Name (Z → A)' },
+] as const;
 
 export default function Home() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -68,6 +68,7 @@ export default function Home() {
   );
 
   const [sorting, setSorting] = useState(0);
+  const [sortModalVisible, setSortModalVisible] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -231,10 +232,10 @@ export default function Home() {
             <View style={styles.toolbarRight}>
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={() => setSorting(getNextSorting(sorting))}
+                onPress={() => setSortModalVisible(true)}
               >
                 <MaterialCommunityIcons
-                  name={SORT_ICONS[sorting]}
+                  name={SORT_OPTIONS[sorting].icon}
                   size={26}
                   color={theme['unselected-icon-color']}
                 />
@@ -296,18 +297,7 @@ export default function Home() {
               refreshControl={
                 <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
               }
-              contentContainerStyle={[
-                styles.listContent,
-                { backgroundColor: theme['color-basic-600'], borderColor: theme['card-border-color'] },
-              ]}
-              ItemSeparatorComponent={() => (
-                <View
-                  style={[
-                    styles.separator,
-                    { backgroundColor: theme['card-border-color'] },
-                  ]}
-                />
-              )}
+              contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               style={styles.list}
             />
@@ -323,14 +313,19 @@ export default function Home() {
                   <Text
                     style={[styles.emptyText, { color: theme['text-hint-color'] }]}
                   >
-                    {"CryptoWarden keeps your seed phrases secured in iCloud Keychain.\nOnly you can access them.\n\nAnd it's open-source."}
+                    {"CryptoWarden keeps your seed phrases encrypted on your device.\nOnly you can access them.\n\nAnd it's open-source."}
                   </Text>
-                  <Button
-                    style={styles.syncButton}
+                  <TouchableOpacity
+                    style={[
+                      styles.syncButton,
+                      { backgroundColor: theme['color-primary-500'] },
+                    ]}
                     onPress={handleSync}
+                    activeOpacity={0.85}
                   >
-                    Sync Wallets
-                  </Button>
+                    <MaterialCommunityIcons name="cloud-sync-outline" size={20} color="#fff" />
+                    <Text style={styles.syncButtonText}>Sync Wallets</Text>
+                  </TouchableOpacity>
                 </>
               ) : (
                 <Text style={[styles.emptyText, { color: theme['text-hint-color'] }]}>
@@ -370,6 +365,57 @@ export default function Home() {
           </TouchableOpacity>
         )}
       </StableSafeArea>
+
+      {/* Sort picker modal */}
+      <RNModal
+        isVisible={sortModalVisible}
+        onBackdropPress={() => setSortModalVisible(false)}
+        onSwipeComplete={() => setSortModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
+      >
+        <View style={[styles.sortSheet, { backgroundColor: theme['color-basic-modal-background'] }]}>
+          <View style={[styles.handle, { backgroundColor: theme['transparency-basic-color'] }]} />
+          <Text style={[styles.sortTitle, { color: theme['text-basic-color'] }]}>
+            Sort wallets
+          </Text>
+          {SORT_OPTIONS.map((opt, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={[
+                styles.sortRow,
+                idx === sorting && { backgroundColor: theme['color-primary-600'] },
+              ]}
+              onPress={() => {
+                setSorting(idx);
+                setSortModalVisible(false);
+              }}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons
+                name={opt.icon}
+                size={20}
+                color={idx === sorting ? theme['color-primary-500'] : theme['text-hint-color']}
+              />
+              <Text
+                style={[
+                  styles.sortLabel,
+                  { color: idx === sorting ? theme['color-primary-500'] : theme['text-basic-color'] },
+                ]}
+              >
+                {opt.label}
+              </Text>
+              {idx === sorting && (
+                <MaterialCommunityIcons
+                  name="check"
+                  size={18}
+                  color={theme['color-primary-500']}
+                />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </RNModal>
 
       {/* URL import confirmation dialog */}
       {pendingURLWallet && (
@@ -420,9 +466,9 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: DEFAULT_CORNER_RADIUS,
-    paddingHorizontal: 12,
-    height: 44,
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    height: 48,
     gap: 8,
     marginBottom: DEFAULT_1x_MARGIN,
   },
@@ -435,13 +481,7 @@ const styles = StyleSheet.create({
     marginTop: DEFAULT_2x_MARGIN,
   },
   listContent: {
-    borderRadius: DEFAULT_CORNER_RADIUS,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 70,
+    paddingBottom: 16,
   },
   emptyState: {
     flex: 1,
@@ -461,8 +501,24 @@ const styles = StyleSheet.create({
     marginBottom: DEFAULT_3x_MARGIN,
   },
   syncButton: {
+    flexDirection: 'row',
     width: '100%',
-    borderRadius: DEFAULT_CORNER_RADIUS,
+    height: 54,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    shadowColor: '#4F8EF7',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  syncButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   upsellWrapper: {
     paddingHorizontal: DEFAULT_PADDING,
@@ -482,5 +538,41 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  modal: {
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
+  sortSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: DEFAULT_PADDING,
+    paddingTop: 12,
+    paddingBottom: 40,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: DEFAULT_2x_MARGIN,
+  },
+  sortTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: DEFAULT_2x_MARGIN,
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 8,
+    borderRadius: DEFAULT_CORNER_RADIUS,
+  },
+  sortLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

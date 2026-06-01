@@ -51,9 +51,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     if let windowScene = scene as? UIWindowScene {
       
-      let jsCodeLocation: URL
-      
-      jsCodeLocation = RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index", fallbackExtension: nil)
+      guard let jsCodeLocation = RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index") else {
+        return
+      }
       let rootView = RCTRootView(bundleURL: jsCodeLocation, moduleName: "CryptoWarden", initialProperties: nil, launchOptions: nil)
       let rootViewController = HomeViewController()
       rootViewController.view = rootView

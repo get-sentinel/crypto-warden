@@ -1,174 +1,137 @@
 import { Dimensions, Linking } from 'react-native';
-import Wallet from '../class/Wallet';
+import { WalletData } from '../types/wallet.types';
 import { TOAST_POSITION, WALLET_PROVIDERS } from './constants';
 import { Dispatch } from 'react';
-import { addNewWallet } from '../redux/WalletSlice';
+import { setPendingURLWallet } from '../redux/WalletSlice';
+import { createWallet, findDuplicateBySeedHash, computeSeedHash } from './walletFactory';
 import Toast from 'react-native-toast-message';
 
-export const cropWalletAddress = (address: string) => {
-    let length = address.length
-    return address.slice(0, 4) + '...' + address.slice(length - 4, length)
-}
+export const cropWalletAddress = (address: string): string => {
+  const length = address.length;
+  return address.slice(0, 4) + '...' + address.slice(length - 4, length);
+};
 
-export const isSmallScreen = () => {
-    if (Dimensions.get('screen').height < 812) {
-        return true
+export const isSmallScreen = (): boolean =>
+  Dimensions.get('screen').height < 812;
+
+export const getProviderName = (providerId: number): string =>
+  WALLET_PROVIDERS.find(w => w.id === providerId)?.name ?? 'Unknown';
+
+export const getProviderImagePath = (providerId: number) =>
+  WALLET_PROVIDERS.find(w => w.id === providerId)?.imagePath;
+
+export const getMaxNumberFromArray = (array: number[]): number => {
+  const newId =
+    array.filter(o => o !== null && o !== undefined).sort((a, b) => b - a)[0] + 1;
+  return !newId || isNaN(newId) ? 0 : newId;
+};
+
+export const openURL = (url: string): void => {
+  Linking.canOpenURL(url).then(supported => {
+    if (supported) {
+      Linking.openURL(url);
     }
-    return false
-}
+  });
+};
 
-export const getProviderName = (providerId: number) => {
-    return WALLET_PROVIDERS.filter(w => w.id === providerId)[0].name ?? 'Unknown'
-}
+export const getNextSorting = (sorting: number): number => {
+  switch (sorting) {
+    case 0: return 1;
+    case 1: return 2;
+    case 2: return 3;
+    case 3:
+    default: return 0;
+  }
+};
 
-export const getProviderImagePath = (providerId: number) => {
-    return WALLET_PROVIDERS.filter(w => w.id === providerId)[0].imagePath ?? 'Unknown'
-}
+export const sortWallets = (wallets: WalletData[], sorting: number): WalletData[] => {
+  const active = [...wallets.filter(w => !w.isDeleted)];
+  switch (sorting) {
+    case 0: // Oldest first
+    default:
+      return active;
+    case 1: // Newest first
+      return active.reverse();
+    case 2: // A → Z
+      return active.sort((a, b) => a.name.localeCompare(b.name));
+    case 3: // Z → A
+      return active.sort((a, b) => b.name.localeCompare(a.name));
+  }
+};
 
-export const getMaxNumberFromArray = (array: number[]) => {
-    let newId = array.filter(o => o !== null && o !== undefined).sort((a, b) => b - a)[0] + 1
-    return !newId || isNaN(newId) ? 0 : newId
-}
+export const findProviderIdByName = (name: string): number => {
+  const provider = WALLET_PROVIDERS.find(
+    p => p.name.toLowerCase() === name.toLowerCase(),
+  );
+  return provider ? provider.id : 0;
+};
 
-export const openURL = (url: string) => {
-    Linking.canOpenURL(url).then(supported => {
-        if (supported) {
-            Linking.openURL(url);
-        } else {
-            console.log("Don't know how to open URI: " + url);
-        }
+/**
+ * Parses a cryptowarden:// deep-link URL and stores the wallet as a PENDING import
+ * (in Redux state). The Home screen shows a confirmation dialog before saving.
+ * This prevents silent wallet injection by malicious apps.
+ */
+export const addNewWalletFromURL = (
+  dispatch: Dispatch<any>,
+  url: string,
+  wallets: WalletData[],
+): void => {
+  const parts = url.split('//');
+  if (parts.length !== 2) {
+    console.error('Invalid cryptowarden:// URL format');
+    return;
+  }
+
+  const walletName = decodeURIComponent(parts[1].split('?')[0]) || 'My Wallet';
+  const queryString = parts[1].split('?')[1];
+  if (!queryString) {
+    console.error('cryptowarden:// URL missing query parameters');
+    return;
+  }
+
+  const query: Record<string, string> = {};
+  queryString.split('&').forEach(item => {
+    const [key, value] = item.split('=');
+    if (key && value !== undefined) query[key] = decodeURIComponent(value);
+  });
+
+  const seed = query.seed;
+  if (!seed) {
+    Toast.show({
+      type: 'error',
+      position: TOAST_POSITION,
+      text1: 'Could not import wallet',
+      text2: 'The seed is either missing or malformed',
+      visibilityTime: 2000,
+      props: { iconName: 'cancel' },
     });
-}
+    return;
+  }
 
-export const getNextSorting = (sorting: number) => {
-    switch (sorting) {
-        case 0:
-            return 1
-        case 1:
-            return 2
-        case 2:
-            return 3
-        case 3:
-        default:
-            return 0
-    }
-}
+  const idPool = wallets.map(w => w.id);
+  const pendingWallet = createWallet({
+    idPool,
+    name: walletName,
+    seed,
+    provider: query.provider ? findProviderIdByName(query.provider) : 0,
+    address: query.address,
+    password: query.password,
+  });
 
-export const sortWallets = (wallets: Wallet[], sorting: number) => {
-    let w: Wallet[] = Object.assign([], wallets.filter(wallet => !wallet.isDeleted));
-    switch (sorting) {
-        case 0: // Calendar ascending
-        default:
-            return w
-        case 1: // Calendar descending
-            return w.reverse();
-        case 2: // Alphabetical ascending
-            return w.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-        case 3: // Alphabetical descending
-            return w.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0)).reverse()
-    }
-}
-
-export const analyzeSeed = (nextValue: string, setStatus: (status: number) => void) => {
-
-    // Check that the string is not empty
-    if (nextValue === '') {
-        setStatus(0)
-        return
-    }
-
-    // Check that the string does not start with a space
-    if (nextValue.charAt(0) === " " || nextValue.charAt(nextValue.length - 1) === " ") {
-        setStatus(2)
-        return
-    }
-
-    // Check that the string contains 12 words
-    const words = nextValue.split(" ");
-    if (words.length !== 12) {
-        setStatus(1)
-        return
-    }
-
-    // Check that the string does not contain special characters
-    const regex = /^[a-zA-Z0-9\s]*$/;
-    if (!regex.test(nextValue)) {
-        setStatus(3)
-        return
-    }
-
-    setStatus(4)
-}
-
-export const findProviderIdByName = (name: string) => {
-    const walletProvider = WALLET_PROVIDERS.find(
-        provider => provider.name.toLowerCase() === name.toLowerCase()
-    );
-    return walletProvider ? walletProvider.id : 0;
-}
-
-export const addNewWalletFromURL = (dispatch: Dispatch<any>, url: string, wallets: Wallet[], synchronizable: boolean) => {
-    // Split the URL by "//" to get the wallet name and remaining string
-    const parts = url.split('//');
-
-    if (parts.length !== 2) {
-        console.error('Invalid URL format');
-    }
-
-    // Get the wallet name by splitting the remaining string by "?" and taking the first part
-    const walletName = parts[1].split('?')[0].replace("%20", " ") ?? "My Wallet";
-
-    // Get the query string by splitting the remaining string by "?"
-    const queryString = parts[1].split('?')[1];
-
-    // Parse the query string into an object with key-value pairs
-    const query: { [key: string]: string } = {};
-    queryString.split('&').forEach((item) => {
-        const [key, value] = item.split('=');
-        query[key] = decodeURIComponent(value);
+  // Check for duplicates before surfacing the confirmation dialog
+  const seedHash = computeSeedHash(seed.trim().toLowerCase().replace(/\s+/g, ' '));
+  const duplicate = findDuplicateBySeedHash(seedHash, wallets);
+  if (duplicate) {
+    Toast.show({
+      type: 'info',
+      position: TOAST_POSITION,
+      text1: 'Wallet already exists',
+      text2: `"${duplicate.name}" has the same seed phrase.`,
+      visibilityTime: 3000,
     });
+    // Still surface the dialog — user may want to save it anyway
+  }
 
-    // Get the seed (mandatory field)
-    const seed = query.seed;
-
-    if (!seed) {
-        Toast.show({
-            type: 'success',
-            position: TOAST_POSITION,
-            text1: 'Could not import wallet',
-            text2: 'The seed is either missing or malformed',
-            visibilityTime: 2000,
-            autoHide: true,
-            topOffset: 30,
-            bottomOffset: 40,
-            onShow: () => { },
-            onHide: () => { },
-            onPress: () => { },
-            props: { iconName: 'cancel' }
-        })
-        return
-    }
-
-    // Get the provider (optional field)
-    const provider = query.provider;
-
-    // Get the address (optional field)
-    const address = query.address;
-
-    // Get the password (optional field)
-    const password = query.password;
-
-    let newWallet = new Wallet({
-        provider: provider ? findProviderIdByName(provider) : 0,
-        seed: seed,
-        name: walletName,
-        address: address,
-        password: password,
-        id: getMaxNumberFromArray(wallets.map((w: Wallet) => w.id)),
-        isDeleted: false,
-        createDate: new Date(),
-        updateDate: new Date()
-    })
-
-    dispatch(addNewWallet({ newWallet: newWallet, synchronizable: synchronizable }))
-}
+  // Surface a confirmation dialog in the Home screen before saving
+  dispatch(setPendingURLWallet(pendingWallet));
+};

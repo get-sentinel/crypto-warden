@@ -1,376 +1,472 @@
-import { useNavigation } from "@react-navigation/native";
-import { Button, Card, IndexPath, Input, Layout, Select, SelectItem, Text, TopNavigation, useTheme } from "@ui-kitten/components";
-import React, { useEffect, useState } from "react";
-import { Dimensions, Image, ImageSourcePropType, ScrollView, StatusBar, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
-import Wallet from "../class/Wallet";
-import { BUTTON_FONT_SIZE, DEFAULT_05x_MARGIN, DEFAULT_1x_MARGIN, DEFAULT_2x_MARGIN, DEFAULT_3x_MARGIN, DEFAULT_CORNER_RADIUS, DEFAULT_MODAL_TITLE, DEFAULT_PADDING, SEED_STATUS_MESSAGE, TOAST_POSITION, WALLET_PROVIDERS } from "../utils/constants";
+import React, { useCallback, useState } from 'react';
+import {
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
+import { Text, useTheme } from '@ui-kitten/components';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Clipboard from '@react-native-clipboard/clipboard';
-import Toast from "react-native-toast-message";
-import RNModal from 'react-native-modal';
-import StableSafeArea from "../components/safeArea/StableSafeArea";
-import { Colors } from "react-native/Libraries/NewAppScreen";
-import { analyzeSeed, getMaxNumberFromArray } from "../utils/utils";
-import { addNewWallet } from "../redux/WalletSlice";
-import PageTitle from "../components/PageTitle";
+import Toast from 'react-native-toast-message';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 
+import { WalletData, ChainNetwork } from '../types/wallet.types';
+import { createWallet, findDuplicateBySeedHash, findDuplicateByAddress, computeSeedHash } from '../utils/walletFactory';
+import { analyzeSeedFull, SeedStatus } from '../utils/bip39';
+import {
+  CHAIN_NETWORK_META,
+  DEFAULT_1x_MARGIN,
+  DEFAULT_2x_MARGIN,
+  DEFAULT_3x_MARGIN,
+  DEFAULT_CORNER_RADIUS,
+  DEFAULT_PADDING,
+  SEED_STATUS_MESSAGE,
+  TOAST_POSITION,
+} from '../utils/constants';
+import { addNewWallet } from '../redux/WalletSlice';
+import ChainIcon from '../components/ChainIcon';
+import DuplicateWalletModal from '../components/modals/DuplicateWalletModal';
+import ChainPickerModal from '../components/modals/ChainPickerModal';
 
-const AddWallet = React.memo(() => {
-    const isDarkMode = useColorScheme() === 'dark';
-    const backgroundStyle = {
-        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-    };
-    const theme = useTheme();
-    const dispatch = useDispatch()
-    const navigation = useNavigation()
-    const [walletName, setWalletName] = useState<string>('My Wallet');
-    const [walletAddress, setWalletAddress] = useState<string>('');
-    const [walletSeedPhrase, setWalletSeedPhrase] = useState<string>('');
-    const [walletPassword, setWalletPassword] = useState<string>('');
-    const [walletProvider, setWalletProvider] = useState(0);
-    const [walletProviderImagePath, setWalletProviderImagePath] = useState<ImageSourcePropType>(WALLET_PROVIDERS[0].imagePath);
-    const wallets = useSelector((state: any) => state.walletSlice.wallets);
-    const premium = useSelector((state: any) => state.accountSlice.premium);
-    const [walleteProviderSelectionModalVisible, setWalleteProviderSelectionModalVisible] = useState(false)
-    const [checkSeedStatus, setCheckSeedStatus] = useState(0)
+export default function AddWallet() {
+  const isDarkMode = useColorScheme() === 'dark';
+  const theme = useTheme();
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
 
-    const selectProviderImagePath = (provider: number | undefined) => {
-        let wp = WALLET_PROVIDERS.filter(w => w.id === provider)
-        setWalletProviderImagePath(wp.length > 0 ? wp[0].imagePath : WALLET_PROVIDERS[0].imagePath)
+  const wallets: WalletData[] = useSelector((state: any) => state.walletSlice.wallets);
+  const premium: boolean = useSelector((state: any) => state.accountSlice.premium);
+
+  const [walletName, setWalletName] = useState('My Wallet');
+  const [walletSeed, setWalletSeed] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
+  const [walletPassword, setWalletPassword] = useState('');
+  const [walletNotes, setWalletNotes] = useState('');
+  const [walletTags, setWalletTags] = useState('');
+  const [walletChain, setWalletChain] = useState<ChainNetwork>('other');
+  const [seedStatus, setSeedStatus] = useState(SeedStatus.EMPTY);
+  const [chainPickerVisible, setChainPickerVisible] = useState(false);
+  const [duplicateWallet, setDuplicateWallet] = useState<WalletData | undefined>();
+
+  const handleSeedChange = useCallback((value: string) => {
+    setWalletSeed(value);
+    setSeedStatus(analyzeSeedFull(value));
+  }, []);
+
+  const parsedTags = useCallback(() => {
+    return walletTags
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+  }, [walletTags]);
+
+  const doSave = useCallback(() => {
+    const newWallet = createWallet({
+      idPool: wallets.map(w => w.id),
+      name: walletName.trim(),
+      seed: walletSeed,
+      chain: walletChain,
+      address: walletAddress.trim() || undefined,
+      password: walletPassword.trim() || undefined,
+      notes: walletNotes.trim() || undefined,
+      tags: parsedTags(),
+    });
+    dispatch(addNewWallet({ newWallet, synchronizable: premium }));
+    setDuplicateWallet(undefined);
+    navigation.goBack();
+  }, [
+    wallets,
+    walletName,
+    walletSeed,
+    walletChain,
+    walletAddress,
+    walletPassword,
+    walletNotes,
+    parsedTags,
+    dispatch,
+    premium,
+    navigation,
+  ]);
+
+  const handleSave = useCallback(() => {
+    if (!walletSeed.trim() || !walletName.trim()) {
+      Toast.show({
+        type: 'error',
+        position: TOAST_POSITION,
+        text1: 'Missing fields',
+        text2: 'Name and seed phrase are required',
+        visibilityTime: 2000,
+        props: { iconName: 'alert' },
+      });
+      return;
     }
-    
-    const selectProvider = (provider: number | undefined) => {
-        setWalletProvider(provider ?? 0)
-        selectProviderImagePath(provider ?? 0)
+
+    const normalized = walletSeed.trim().toLowerCase().replace(/\s+/g, ' ');
+    const hash = computeSeedHash(normalized);
+    const dupBySeed = findDuplicateBySeedHash(hash, wallets);
+    const dupByAddr = walletAddress.trim()
+      ? findDuplicateByAddress(walletAddress.trim(), wallets)
+      : undefined;
+
+    if (dupBySeed || dupByAddr) {
+      setDuplicateWallet(dupBySeed ?? dupByAddr);
+      return;
     }
 
-    const saveNewWallet = () => {
+    doSave();
+  }, [walletSeed, walletName, walletAddress, wallets, doSave]);
 
-        if (walletSeedPhrase === '' || walletName === '') {
-            Toast.show({
-                type: 'success',
-                position: TOAST_POSITION,
-                text1: "Error",
-                text2: "At least one mandatory field is missing",
-                visibilityTime: 2000,
-                autoHide: true,
-                topOffset: 30,
-                bottomOffset: 40,
-                onShow: () => { },
-                onHide: () => { },
-                onPress: () => { },
-                props: { iconName: 'alert' }
-            })
-            return
-        }
+  return (
+    <>
+      <View style={[styles.container, { backgroundColor: theme['color-basic-500'] }]}>
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
-        let newWallet = new Wallet({
-            provider: walletProvider,
-            seed: walletSeedPhrase,
-            name: walletName,
-            address: walletAddress,
-            password: walletPassword,
-            id: getMaxNumberFromArray(wallets.map((w: Wallet) => w.id)),
-            isDeleted: false,
-            createDate: new Date(),
-            updateDate: new Date()
-        })
+        <View style={[styles.inner, { backgroundColor: theme['color-basic-500'] }]}>
+          {/* Header */}
+          <View style={styles.toolbar}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={[styles.closeBtn, { backgroundColor: theme['color-basic-600'] }]}
+              hitSlop={6}
+            >
+              <MaterialCommunityIcons
+                name="close"
+                size={18}
+                color={theme['text-basic-color']}
+              />
+            </TouchableOpacity>
+            <Text style={[styles.toolbarTitle, { color: theme['text-basic-color'] }]}>
+              New Wallet
+            </Text>
+            <TouchableOpacity
+              style={[styles.savePill, { backgroundColor: theme['color-primary-500'] }]}
+              onPress={handleSave}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.savePillText}>Save</Text>
+            </TouchableOpacity>
+          </View>
 
-        dispatch(addNewWallet({ newWallet: newWallet, synchronizable: premium }))
-        navigation.goBack()
-    }
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Chain icon + wallet name */}
+            <View style={styles.nameRow}>
+              <ChainIcon chain={walletChain} size={60} />
 
-    const setSeedValue = (nextValue: string) => {
-        analyzeSeed(nextValue, setCheckSeedStatus)
-        setWalletSeedPhrase(nextValue)
-    }
-
-    return (
-
-        <>
-            <View style={{ flex: 1 }}>
-                <StatusBar
-                    barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                    backgroundColor={backgroundStyle.backgroundColor}
-                />
-                <View style={{
-                    padding: DEFAULT_PADDING,
-                    backgroundColor: theme['color-basic-500'],
-                    flex: 1
-                }}>
-
-                    <View style={styles().toolbar}>
-                        <PageTitle title='New Wallet' />
-
-                        <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center' }}
-                            onPress={() => {
-                                saveNewWallet()
-                            }}>
-                            <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'content-save-outline'} size={27} color={theme['text-basic-color']} />
-                            <Text style={{ fontWeight: '500', fontSize: 16, color: theme['text-basic-color'] }}>Save</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView
-                        contentContainerStyle={{
-                            borderColor: 'transparent',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            marginTop: 20,
-                            paddingBottom: 200,
-                        }}
-                        showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps='handled'>
-
-                        <View style={{ marginBottom: DEFAULT_3x_MARGIN, flexDirection: "row", alignItems: 'center' }}>
-                            <TouchableOpacity style={{ marginRight: DEFAULT_2x_MARGIN }}
-                                onPress={() => setWalleteProviderSelectionModalVisible(true)}>
-                                <Image source={walletProviderImagePath} style={{ width: 60, height: 60, borderRadius: 5, borderWidth: 0, borderColor: theme['color-basic-300'] }} />
-                                <View style={{ borderRadius: 50, width: 21, height: 21, backgroundColor: theme['color-primary-500'], position: 'absolute', right: -5, bottom: -5, justifyContent: 'center', alignItems: 'center' }}>
-                                    <MaterialCommunityIcons size={13}
-                                        color={theme['text-primary-color-button']}
-                                        name='pencil'
-                                        style={{}} />
-                                </View>
-                            </TouchableOpacity>
-
-                            <Input
-                                value={walletName}
-                                textStyle={styles().walletNameTextStyle}
-                                // placeholder='Wallet Name*'
-                                caption=''
-                                size='medium'
-                                style={{ paddingHorizontal: 0, paddingVertical: 0, marginVertical: 0, flex: 1, backgroundColor: theme['color-basic-600'], borderWidth: 0, borderColor: theme['color-basic-300'], borderRadius: 8, }}
-                                onChangeText={(nextValue: string) => setWalletName(nextValue)}
-                                accessoryRight={() => {
-                                    return walletName
-                                        ? <TouchableOpacity onPress={() => setWalletName('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
-                                                name='window-close' />
-                                        </TouchableOpacity>
-                                        : <View />
-                                }}
-                            />
-                        </View>
-
-                        {/* # WALLET SEED PHRASE */}
-                        <View style={{ ...styles().inputStyle, ...{ paddingTop: 15, paddingBottom: 10 } }}>
-                            <Text style={styles().label}>{'seed phrase'}</Text>
-                            <Input
-                                value={walletSeedPhrase}
-                                textStyle={styles().inputTextStyle}
-                                // placeholder='example: sea one rainbow elephant sand phone ...'
-                                caption=''
-                                multiline={true}
-                                size='medium'
-                                style={{ ...styles().inputField, ...{ height: 128 } }}
-                                onChangeText={(nextValue: string) => setSeedValue(nextValue)}
-                                accessoryRight={() => {
-                                    return walletSeedPhrase
-                                        ? <TouchableOpacity onPress={() => setWalletSeedPhrase('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
-                                                name='window-close' />
-                                        </TouchableOpacity>
-                                        : <View />
-                                }}
-                            />
-                        </View>
-
-                        {/* # WALLET ADDRESS */}
-                        <View style={{ ...styles().inputStyle, ...{ paddingTop: 15, paddingBottom: 10 } }}>
-                            <Text style={styles().label}>{'wallet address (optional)'}</Text>
-                            <Input
-                                value={walletAddress}
-                                textStyle={styles().inputTextStyle}
-                                // placeholder='example: 0x71C7656EC7ab88b098defB75...'
-                                caption=''
-                                size='small'
-                                style={styles().inputField}
-                                onChangeText={(nextValue: string) => setWalletAddress(nextValue)}
-                                accessoryRight={() => {
-                                    return walletAddress
-                                        ? <TouchableOpacity onPress={() => setWalletAddress('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
-                                                name='window-close' />
-                                        </TouchableOpacity>
-                                        : <View />
-                                }}
-                            />
-                        </View>
-
-                        {/* # WALLET PASSWORD */}
-                        <View style={{ ...styles().inputStyle, ...{ paddingTop: 15, paddingBottom: 10 } }}>
-                            <Text style={styles().label}>{'wallet password (optional)'}</Text>
-                            <Input
-                                value={walletPassword}
-                                textStyle={styles().inputTextStyle}
-                                // placeholder='example: A*43hbRT/3r52f'
-                                caption=''
-                                size='small'
-                                style={styles().inputField}
-                                onChangeText={(nextValue: string) => setWalletPassword(nextValue)}
-                                accessoryRight={() => {
-                                    return walletPassword
-                                        ? <TouchableOpacity onPress={() => setWalletPassword('')}>
-                                            <MaterialCommunityIcons size={20}
-                                                color={theme['text-primary-color-button']}
-                                                name='window-close' />
-                                        </TouchableOpacity>
-                                        : <View />
-                                }}
-                            />
-                        </View>
-
-                    </ScrollView>
-
-                    {/* Staus message */}
-                    <View style={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginBottom: DEFAULT_2x_MARGIN }}>
-                        <MaterialCommunityIcons style={{ marginRight: DEFAULT_05x_MARGIN }} name={'circle'} size={10} color={SEED_STATUS_MESSAGE[checkSeedStatus].color} />
-                        <Text style={{ fontWeight: '500', fontSize: 12, color: theme['text-basic-color'] }}>{SEED_STATUS_MESSAGE[checkSeedStatus].message}</Text>
-                    </View>
-
-                    <RNModal
-                        isVisible={walleteProviderSelectionModalVisible}
-                        onBackdropPress={() => setWalleteProviderSelectionModalVisible(false)}
-                        onSwipeComplete={() => setWalleteProviderSelectionModalVisible(false)}
-                        swipeDirection='down'
-                        style={{
-                            justifyContent: "flex-end",
-                            margin: 0
-                        }}
-                    >
-
-                        <Card
-                            disabled={true}
-                            style={{
-                                backgroundColor: theme['color-basic-modal-background'],
-                                borderColor: 'transparent',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                paddingBottom: 0,
-                            }}
-                        >
-
-                            <View style={styles().settingsBox}>
-                                <ScrollView
-                                    contentContainerStyle={{ display: 'flex', flexDirection: 'row', width: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}
-                                >
-                                    {
-                                        WALLET_PROVIDERS.map((item) => {
-                                            return <TouchableOpacity style={{
-                                                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                                marginRight: 10,
-                                                marginBottom: 10,
-                                                width: 75,
-                                                height: 75,
-                                                borderRadius: 10,
-                                                borderWidth: item.id === walletProvider ? 2 : 0.5,
-                                                paddingVertical: 4,
-                                                backgroundColor: theme['color-basic-200'],
-                                                borderColor: item.id === walletProvider ? theme['color-primary-500'] : theme['color-basic-300'],
-                                            }}
-                                                key={item.id}
-                                                onPress={(e) => {
-                                                    selectProvider(item.id)
-                                                }}>
-
-                                                <Image source={item.imagePath} style={{ width: 40, height: 40, borderRadius: 5, }} />
-                                                <Text style={{ fontSize: 9, marginTop: 5, textTransform: 'capitalize', textAlign: 'center' }}>{item.name}</Text>
-                                            </TouchableOpacity>
-
-                                        })}
-                                </ScrollView>
-                            </View>
-
-                            <Button
-                                style={{ width: '100%', marginBottom: 25, borderRadius: DEFAULT_CORNER_RADIUS, backgroundColor: theme['background-color-button'], borderWidth: 0 }}
-                                onPress={() => {
-                                    setWalleteProviderSelectionModalVisible(false)
-                                }}>
-                                {props => <Text {...props} style={{ color: theme['fab-text-color'], fontWeight: '600', fontSize: BUTTON_FONT_SIZE }}>
-                                    {'Close Menu'}
-                                </Text>}
-                            </Button>
-                        </Card>
-
-                    </RNModal>
-                </View>
+              <TextInput
+                value={walletName}
+                onChangeText={setWalletName}
+                style={[
+                  styles.nameInput,
+                  {
+                    backgroundColor: theme['color-basic-600'],
+                    color: theme['text-basic-color'],
+                  },
+                ]}
+                placeholderTextColor={theme['text-hint-color']}
+              />
             </View>
 
-        </>
-    );
-});
+            {/* Seed phrase */}
+            <SectionCard title="Seed Phrase *" theme={theme}>
+              <TextInput
+                value={walletSeed}
+                onChangeText={handleSeedChange}
+                multiline
+                style={[styles.seedInput, { color: theme['text-basic-color'] }]}
+                placeholder="word1 word2 word3 ..."
+                placeholderTextColor={theme['text-hint-color']}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textAlignVertical="top"
+              />
+              <View style={styles.seedStatus}>
+                <View
+                  style={[styles.statusDot, { backgroundColor: SEED_STATUS_MESSAGE[seedStatus]?.color }]}
+                />
+                <Text style={[styles.statusText, { color: theme['text-hint-color'] }]}>
+                  {SEED_STATUS_MESSAGE[seedStatus]?.message}
+                </Text>
+              </View>
+            </SectionCard>
 
-const styles = () => {
-    const theme = useTheme();
+            {/* Chain network picker */}
+            <SectionCard title="Network / Chain" theme={theme}>
+              <TouchableOpacity
+                style={styles.chainTrigger}
+                onPress={() => setChainPickerVisible(true)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.chainTriggerDot,
+                    { backgroundColor: CHAIN_NETWORK_META[walletChain].color },
+                  ]}
+                />
+                <Text style={[styles.chainTriggerLabel, { color: theme['text-basic-color'] }]}>
+                  {CHAIN_NETWORK_META[walletChain].label}
+                </Text>
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={18}
+                  color={theme['text-hint-color']}
+                />
+              </TouchableOpacity>
+            </SectionCard>
 
-    return StyleSheet.create({
-        inputTextStyle: {
-            fontSize: 16,
-            color: theme['text-basic-color'],
-        },
-        walletNameTextStyle: {
-            marginHorizontal: 0,
-            paddingHorizontal: 0,
-            fontSize: 21,
-            fontWeight: '600',
-        },
-        inputStyle: {
-            marginBottom: DEFAULT_2x_MARGIN,
-            paddingHorizontal: DEFAULT_1x_MARGIN,
-            paddingTop: DEFAULT_1x_MARGIN,
-            borderWidth: 0,
-            borderColor: theme['color-basic-300'],
-            borderRadius: 8,
-            alignItems: 'flex-start',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            display: 'flex',
-            backgroundColor: theme['color-basic-600'],
-        },
-        label: {
-            fontSize: 15,
-            fontWeight: '400',
-            marginLeft: 12,
-            color: theme['color-primary-500']
-        },
-        copyLabel: {
-            fontSize: 12,
-            fontWeight: '700',
-            color: theme['text-basic-color']
-        },
-        settingsBox: {
-            display: 'flex',
-            width: '100%',
-            borderRadius: DEFAULT_CORNER_RADIUS,
-            paddingVertical: 0,
-            marginBottom: 20,
-        },
-        copyCell: {
-            flex: 1
-        },
-        toolbar: {
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: DEFAULT_3x_MARGIN
-        },
-        inputField: {
-            borderWidth: 0,
-            paddingHorizontal: 0,
-            marginHorizontal: -3.5,
-            paddingVertical: 0,
-            marginVertical: 0,
-            marginTop: 0,
-        }
-    });
+            {/* Address */}
+            <SectionCard title="Wallet Address (optional)" theme={theme}>
+              <TextInput
+                value={walletAddress}
+                onChangeText={setWalletAddress}
+                style={[styles.fieldInput, { color: theme['text-basic-color'] }]}
+                placeholder="0x71C7656EC7ab88b098defB75..."
+                placeholderTextColor={theme['text-hint-color']}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </SectionCard>
+
+            {/* Password */}
+            <SectionCard title="Wallet Password (optional)" theme={theme}>
+              <TextInput
+                value={walletPassword}
+                onChangeText={setWalletPassword}
+                style={[styles.fieldInput, { color: theme['text-basic-color'] }]}
+                secureTextEntry
+                placeholder="Password or passphrase"
+                placeholderTextColor={theme['text-hint-color']}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </SectionCard>
+
+            {/* Notes */}
+            <SectionCard title="Notes (optional)" theme={theme}>
+              <TextInput
+                value={walletNotes}
+                onChangeText={setWalletNotes}
+                multiline
+                style={[styles.notesInput, { color: theme['text-basic-color'] }]}
+                placeholder="Derivation path, hints, or any context..."
+                placeholderTextColor={theme['text-hint-color']}
+                textAlignVertical="top"
+              />
+            </SectionCard>
+
+            {/* Tags */}
+            <SectionCard title="Tags (optional)" theme={theme}>
+              <TextInput
+                value={walletTags}
+                onChangeText={setWalletTags}
+                style={[styles.fieldInput, { color: theme['text-basic-color'] }]}
+                placeholder="DeFi, Cold Storage, NFTs (comma-separated)"
+                placeholderTextColor={theme['text-hint-color']}
+                autoCapitalize="none"
+              />
+              {parsedTags().length > 0 && (
+                <View style={styles.tagsPreview}>
+                  {parsedTags().map(t => (
+                    <View
+                      key={t}
+                      style={[styles.tagPreviewChip, { backgroundColor: theme['tag-chip-background'] }]}
+                    >
+                      <Text style={[styles.tagPreviewLabel, { color: theme['tag-chip-text'] }]}>
+                        {t}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </SectionCard>
+          </ScrollView>
+        </View>
+      </View>
+
+      {/* Chain picker modal */}
+      <ChainPickerModal
+        visible={chainPickerVisible}
+        selected={walletChain}
+        onSelect={setWalletChain}
+        onClose={() => setChainPickerVisible(false)}
+      />
+
+      {/* Provider selection modal */}
+      {/* Duplicate detection modal */}
+      {duplicateWallet && (
+        <DuplicateWalletModal
+          existingWallet={duplicateWallet}
+          onSaveAnyway={doSave}
+          onCancel={() => setDuplicateWallet(undefined)}
+        />
+      )}
+    </>
+  );
 }
 
+// Small helper to avoid repetition in form sections
+function SectionCard({
+  title,
+  children,
+  theme,
+}: {
+  title: string;
+  children: React.ReactNode;
+  theme: Record<string, string>;
+}) {
+  return (
+    <View style={[sectionStyles.card, { backgroundColor: theme['color-basic-600'] }]}>
+      <Text style={[sectionStyles.label, { color: theme['color-primary-500'] }]}>
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
 
-export default AddWallet;
+const sectionStyles = StyleSheet.create({
+  card: {
+    borderRadius: DEFAULT_CORNER_RADIUS,
+    paddingHorizontal: DEFAULT_1x_MARGIN + 4,
+    paddingTop: DEFAULT_1x_MARGIN + 4,
+    paddingBottom: DEFAULT_1x_MARGIN,
+    marginBottom: DEFAULT_2x_MARGIN,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  inner: {
+    flex: 1,
+    padding: DEFAULT_PADDING,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: DEFAULT_3x_MARGIN,
+    gap: DEFAULT_2x_MARGIN,
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toolbarTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  savePill: {
+    paddingHorizontal: 18,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savePillText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  scrollContent: {
+    paddingBottom: 120,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: DEFAULT_2x_MARGIN,
+    gap: DEFAULT_2x_MARGIN,
+  },
+  nameInput: {
+    flex: 1,
+    height: 56,
+    borderRadius: DEFAULT_CORNER_RADIUS,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  seedInput: {
+    fontSize: 15,
+    minHeight: 90,
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  fieldInput: {
+    fontSize: 15,
+    paddingVertical: 6,
+  },
+  notesInput: {
+    fontSize: 15,
+    minHeight: 70,
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  seedStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    flex: 1,
+  },
+  chainTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 10,
+  },
+  chainTriggerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  chainTriggerLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  tagsPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingVertical: 6,
+  },
+  tagPreviewChip: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  tagPreviewLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+});

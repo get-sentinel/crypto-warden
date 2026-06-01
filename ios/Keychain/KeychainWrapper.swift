@@ -9,7 +9,7 @@ import Foundation
 import KeychainAccess
 
 @objc(KeychainWrapper) class KeychainWrapper: NSObject {
-  @objc static func requiresMainQueueSetup() -> Bool {return true}
+  @objc static func requiresMainQueueSetup() -> Bool { return false }
   
   static let sharedInstance = KeychainWrapper()
   

@@ -49,7 +49,7 @@ export default function LockScreen() {
         size="large"
         onPress={handleUnlock}
       >
-        Unlock with Face ID / Touch ID
+        Unlock with biometrics
       </Button>
     </View>
   );
