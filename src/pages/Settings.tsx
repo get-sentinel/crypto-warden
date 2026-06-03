@@ -261,11 +261,22 @@ const Settings = () => {
                 Dark Mode
               </Text>
             </View>
-            <Switch
-              value={themeMode === 'dark'}
-              onValueChange={handleDarkModeToggle}
-              trackColor={{ true: theme['color-primary-500'] }}
-            />
+            {premium ? (
+              <Switch
+                value={themeMode === 'dark'}
+                onValueChange={handleDarkModeToggle}
+                trackColor={{ true: theme['color-primary-500'] }}
+              />
+            ) : (
+              <TouchableOpacity
+                style={styles.valueRow}
+                onPress={() => navigation.navigate(PAGES.PAYWALL)}
+              >
+                <View style={[styles.plusBadge, { backgroundColor: theme['color-primary-500'] }]}>
+                  <Text style={styles.plusBadgeText}>Plus</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -281,11 +292,22 @@ const Settings = () => {
                 Biometric Lock
               </Text>
             </View>
-            <Switch
-              value={biometricEnabled}
-              onValueChange={handleBiometricToggle}
-              trackColor={{ true: theme['color-primary-500'] }}
-            />
+            {premium ? (
+              <Switch
+                value={biometricEnabled}
+                onValueChange={handleBiometricToggle}
+                trackColor={{ true: theme['color-primary-500'] }}
+              />
+            ) : (
+              <TouchableOpacity
+                style={styles.valueRow}
+                onPress={() => navigation.navigate(PAGES.PAYWALL)}
+              >
+                <View style={[styles.plusBadge, { backgroundColor: theme['color-primary-500'] }]}>
+                  <Text style={styles.plusBadgeText}>Plus</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           <Divider style={[styles.divider, { backgroundColor: theme['card-border-color'] }]} />
@@ -338,6 +360,23 @@ const Settings = () => {
               )}
               <Icon name="arrow-ios-forward" fill={theme['text-hint-color']} style={styles.chevronIcon} />
             </View>
+          </TouchableOpacity>
+
+          <Divider style={[styles.divider, { backgroundColor: theme['card-border-color'] }]} />
+
+          <TouchableOpacity
+            style={styles.settingsItem}
+            onPress={() => navigation.navigate(PAGES.SECURITY_CONFIG)}
+          >
+            <View style={styles.settingsTextAndIcon}>
+              <View style={[styles.iconBox, { backgroundColor: '#0EA5E9' }]}>
+                <MaterialCommunityIcons name="cloud-lock" size={16} color="#fff" />
+              </View>
+              <Text style={[styles.settingsText, { color: theme['text-basic-color'] }]}>
+                Storage &amp; Encryption
+              </Text>
+            </View>
+            <Icon name="arrow-ios-forward" fill={theme['text-hint-color']} style={styles.chevronIcon} />
           </TouchableOpacity>
         </View>
 

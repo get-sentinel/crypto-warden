@@ -39,7 +39,9 @@ export default function AddWallet() {
   const navigation = useNavigation();
 
   const wallets: WalletData[] = useSelector((state: any) => state.walletSlice.wallets);
-  const premium: boolean = useSelector((state: any) => state.accountSlice.premium);
+  const securityOption: string = useSelector((state: any) => state.accountSlice.securityOption);
+  const uid: string | undefined = useSelector((state: any) => state.accountSlice.uid);
+  const password: string | undefined = useSelector((state: any) => state.accountSlice.password);
 
   const [walletName, setWalletName] = useState('My Wallet');
   const [walletSeed, setWalletSeed] = useState('');
@@ -76,7 +78,7 @@ export default function AddWallet() {
       notes: walletNotes.trim() || undefined,
       tags: parsedTags(),
     });
-    dispatch(addNewWallet({ newWallet, synchronizable: premium }));
+    dispatch(addNewWallet({ newWallet, securityOption, uid, password }));
     setDuplicateWallet(undefined);
     navigation.goBack();
   }, [
@@ -89,7 +91,9 @@ export default function AddWallet() {
     walletNotes,
     parsedTags,
     dispatch,
-    premium,
+    securityOption,
+    uid,
+    password,
     navigation,
   ]);
 

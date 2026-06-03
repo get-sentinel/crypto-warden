@@ -45,7 +45,9 @@ export default function WalletDetails() {
   const navigation = useNavigation();
 
   const selectedWallet: WalletData = useSelector((state: any) => state.walletSlice.selectedWallet);
-  const premium: boolean = useSelector((state: any) => state.accountSlice.premium);
+  const securityOption: string = useSelector((state: any) => state.accountSlice.securityOption);
+  const uid: string | undefined = useSelector((state: any) => state.accountSlice.uid);
+  const password: string | undefined = useSelector((state: any) => state.accountSlice.password);
 
   // Form state — mirrors selectedWallet fields
   const [walletName, setWalletName] = useState('');
@@ -139,7 +141,7 @@ export default function WalletDetails() {
         updateDate: new Date().toISOString(),
       };
 
-      dispatch(updateWallet({ updatedWallet: updated, synchronizable: false }));
+      dispatch(updateWallet({ updatedWallet: updated, securityOption, uid, password }));
     },
     [
       walletSeed,
@@ -152,6 +154,9 @@ export default function WalletDetails() {
       selectedWallet,
       parsedTags,
       dispatch,
+      securityOption,
+      uid,
+      password,
     ],
   );
 

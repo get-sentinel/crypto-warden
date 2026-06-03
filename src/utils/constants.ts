@@ -32,11 +32,44 @@ export const PAGES = {
   FAQ: 'faq',
   ONBOARDING: 'onboarding',
   PAYWALL: 'paywall',
+  SECURITY_CONFIG: 'securityConfig',
 } as const;
 
 export const KEYCHAIN_PATHS = {
   WALLETS: 'wallets',
 } as const;
+
+// ── Storage backends (Security Config) ────────────────────────────────────────
+// Wallets can be stored in one of several backends, chosen by the user. Values are
+// persisted and used as discriminators — DO NOT change the string values, they must
+// match what the production app wrote.
+export const SECURITY_OPTIONS = {
+  ICLOUD: 'iCloud',          // iOS Keychain, synchronizable (iCloud Keychain)
+  SENTINEL: 'sentinel',      // Firestore, AES-256 encrypted with the user's password
+  E_STORAGE: 'encryptedStorage', // On-device encrypted storage (react-native-encrypted-storage)
+} as const;
+
+export type SecurityOption = (typeof SECURITY_OPTIONS)[keyof typeof SECURITY_OPTIONS];
+
+export const SECURITY_OPTION_DISPLAY_NAMES: Record<string, string> = {
+  [SECURITY_OPTIONS.ICLOUD]: 'iCloud Keychain',
+  [SECURITY_OPTIONS.SENTINEL]: 'Sentinel Cloud',
+  [SECURITY_OPTIONS.E_STORAGE]: 'Encrypted Storage',
+};
+
+// Key under which the wallets blob is stored in each backend.
+export const KEYCHAIN_KEY = { WALLETS: 'wallets' } as const;
+export const SENTINEL_CLOUD_KEY = { WALLETS: 'wallets' } as const;
+export const E_STORAGE_KEY = { WALLETS: 'com.sentinel.cryptowarden.wallets' } as const;
+
+// Locally stored (keychain on iOS / encrypted storage on Android) — NOT the wallets,
+// just the chosen backend and the encryption password. Key names match the legacy app.
+export const LOCAL_STORAGE_KEYS = {
+  PASSWORD: 'password',
+  SECURITY_OPTION: 'securityOption',
+} as const;
+
+export const COLLECTION = { DATA: 'data' } as const;
 
 // ── Spacing & sizing ──────────────────────────────────────────────────────────
 export const DEFAULT_PADDING = 24;

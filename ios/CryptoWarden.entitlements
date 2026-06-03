@@ -13,6 +13,8 @@
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)com.sentinel.warden</string>
+		<!-- Legacy SeedWarden group — required to migrate pre-rename wallets. -->
+		<string>$(AppIdentifierPrefix)com.sentinel.seedwarden</string>
 	</array>
 </dict>
 </plist>

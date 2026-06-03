@@ -1,12 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WalletData } from '../types/wallet.types';
-import { setWalletsToKeychain } from '../storage/KeychainManager';
+import { saveWallets } from '../storage/StorageManager';
 
 interface WalletState {
   wallets: WalletData[];
   selectedWallet: WalletData | undefined;
   /** Wallet received via cryptowarden:// URL — awaiting user confirmation before saving. */
   pendingURLWallet: WalletData | undefined;
+}
+
+/** Storage context threaded through write actions so saves hit the chosen backend. */
+interface StorageContext {
+  securityOption: string;
+  uid?: string;
+  password?: string;
 }
 
 const walletSlice = createSlice({
@@ -19,12 +26,14 @@ const walletSlice = createSlice({
   reducers: {
     addNewWallet: (
       state,
-      action: PayloadAction<{ newWallet: WalletData; synchronizable: boolean }>,
+      action: PayloadAction<{ newWallet: WalletData } & StorageContext>,
     ) => {
-      const updated = [...state.wallets, action.payload.newWallet];
+      const { newWallet, securityOption, uid, password } = action.payload;
+      const updated = [...state.wallets, newWallet];
       state.wallets = updated;
-      // Side effect in reducer — intentional; kept for simplicity over async thunk
-      setWalletsToKeychain(updated, action.payload.synchronizable);
+      // Side effect in reducer — intentional; kept for simplicity over async thunk.
+      // Persists to whichever backend the user selected in Security Config.
+      saveWallets({ local: updated, securityOption, uid, password });
     },
 
     loadWallets: (state, action: PayloadAction<WalletData[]>) => {
@@ -37,9 +46,9 @@ const walletSlice = createSlice({
 
     updateWallet: (
       state,
-      action: PayloadAction<{ updatedWallet: WalletData; synchronizable: boolean }>,
+      action: PayloadAction<{ updatedWallet: WalletData } & StorageContext>,
     ) => {
-      const { updatedWallet, synchronizable } = action.payload;
+      const { updatedWallet, securityOption, uid, password } = action.payload;
       // Match by id — safe even when the seed phrase itself is edited
       const idx = state.wallets.findIndex((w: WalletData) => w.id === updatedWallet.id);
       if (idx === -1) return;
@@ -50,8 +59,9 @@ const walletSlice = createSlice({
         ...state.wallets.slice(idx + 1),
       ];
       state.wallets = updated;
-      // Side effect in reducer — intentional; kept for simplicity over async thunk
-      setWalletsToKeychain(updated, synchronizable);
+      // Side effect in reducer — intentional; kept for simplicity over async thunk.
+      // Persists to whichever backend the user selected in Security Config.
+      saveWallets({ local: updated, securityOption, uid, password });
     },
 
     setPendingURLWallet: (state, action: PayloadAction<WalletData | undefined>) => {

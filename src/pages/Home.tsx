@@ -36,8 +36,14 @@ import {
   TOP_NAV_TITLE_WEIGHT,
 } from '../utils/constants';
 import { setSelectedWallet, addNewWallet, setPendingURLWallet } from '../redux/WalletSlice';
-import { setAuthenticated, setPremium, setSentinelPremium, setUID } from '../redux/AccountSlice';
-import { fetchWallets } from '../storage/KeychainManager';
+import {
+  setAuthenticated,
+  setPassword,
+  setSecurityOption,
+  setUID,
+} from '../redux/AccountSlice';
+import { getFromLocalStorage, getWalletsAndDispatch } from '../storage/StorageManager';
+import { LOCAL_STORAGE_KEYS } from '../utils/constants';
 import StableSafeArea from '../components/safeArea/StableSafeArea';
 import WalletCell from '../components/cells/WalletCell';
 import TagFilterBar from '../components/chips/TagFilterBar';
@@ -62,10 +68,12 @@ export default function Home() {
   const navigation = useNavigation<any>();
 
   const wallets: WalletData[] = useSelector((state: any) => state.walletSlice.wallets);
-  const premium: boolean = useSelector((state: any) => state.accountSlice.premium);
   const pendingURLWallet: WalletData | undefined = useSelector(
     (state: any) => state.walletSlice.pendingURLWallet,
   );
+  const securityOption: string = useSelector((state: any) => state.accountSlice.securityOption);
+  const uid: string | undefined = useSelector((state: any) => state.accountSlice.uid);
+  const password: string | undefined = useSelector((state: any) => state.accountSlice.password);
 
   const [sorting, setSorting] = useState(0);
   const [sortModalVisible, setSortModalVisible] = useState(false);
@@ -112,9 +120,28 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Bootstrap the stored storage backend + encryption password (kept on-device).
+  // Migrating users already have these in their keychain from the production app,
+  // so this is what makes their Sentinel Cloud wallets load again.
   useEffect(() => {
-    fetchWallets({ dispatch, synchronizable: premium });
-  }, [premium]);
+    (async () => {
+      const storedOption = await getFromLocalStorage({
+        key: LOCAL_STORAGE_KEYS.SECURITY_OPTION,
+      });
+      dispatch(setSecurityOption(storedOption)); // null → platform default
+      const storedPassword = await getFromLocalStorage({
+        key: LOCAL_STORAGE_KEYS.PASSWORD,
+      });
+      if (storedPassword) dispatch(setPassword(storedPassword));
+    })();
+  }, [dispatch]);
+
+  // Load wallets from the active backend. Re-runs when the backend, sign-in (uid,
+  // needed for Sentinel Cloud), or password becomes available.
+  useEffect(() => {
+    if (!securityOption) return;
+    getWalletsAndDispatch({ dispatch, securityOption, uid, password });
+  }, [dispatch, securityOption, uid, password]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
 
@@ -148,41 +175,28 @@ export default function Home() {
   // ── Actions ──────────────────────────────────────────────────────────────────
 
   const handleAddWallet = useCallback(() => {
-    if (premium || wallets.length < 1) {
-      navigation.navigate(PAGES.ADD);
-    } else {
-      navigation.navigate(PAGES.PAYWALL);
-    }
-  }, [premium, wallets.length, navigation]);
+    // Wallets are free and unlimited — no premium gate.
+    navigation.navigate(PAGES.ADD);
+  }, [navigation]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    fetchWallets({ dispatch, synchronizable: premium });
+    await getWalletsAndDispatch({ dispatch, securityOption, uid, password, local: wallets });
     setIsRefreshing(false);
-  }, [dispatch, premium]);
+  }, [dispatch, securityOption, uid, password, wallets]);
 
-  const handleSync = useCallback(() => {
-    fetchWallets({ dispatch, synchronizable: premium });
-    if (!premium) {
-      Toast.show({
-        type: 'info',
-        position: TOAST_POSITION,
-        text1: 'Upgrade required',
-        text2: 'Upgrade to Warden Plus to enable syncing',
-        visibilityTime: 2000,
-        props: { iconName: 'alert' },
-      });
-    } else {
-      Toast.show({
-        type: 'success',
-        position: TOAST_POSITION,
-        text1: 'Sync completed',
-        text2: 'Your wallets are up to date',
-        visibilityTime: 2000,
-        props: { iconName: 'check-circle' },
-      });
-    }
-  }, [dispatch, premium]);
+  const handleSync = useCallback(async () => {
+    // Sync is free for everyone.
+    await getWalletsAndDispatch({ dispatch, securityOption, uid, password, local: wallets });
+    Toast.show({
+      type: 'success',
+      position: TOAST_POSITION,
+      text1: 'Sync completed',
+      text2: 'Your wallets are up to date',
+      visibilityTime: 2000,
+      props: { iconName: 'check-circle' },
+    });
+  }, [dispatch, securityOption, uid, password, wallets]);
 
   const handleToggleTag = useCallback((tag: string) => {
     setActiveTags(prev =>
@@ -192,7 +206,7 @@ export default function Home() {
 
   const handleConfirmURLWallet = useCallback(() => {
     if (!pendingURLWallet) return;
-    dispatch(addNewWallet({ newWallet: pendingURLWallet, synchronizable: premium }));
+    dispatch(addNewWallet({ newWallet: pendingURLWallet, securityOption, uid, password }));
     dispatch(setPendingURLWallet(undefined));
     Toast.show({
       type: 'success',
@@ -201,7 +215,7 @@ export default function Home() {
       text2: `"${pendingURLWallet.name}" has been saved.`,
       visibilityTime: 2000,
     });
-  }, [dispatch, pendingURLWallet, premium]);
+  }, [dispatch, pendingURLWallet, securityOption, uid, password]);
 
   const handleDiscardURLWallet = useCallback(() => {
     dispatch(setPendingURLWallet(undefined));
@@ -336,34 +350,6 @@ export default function Home() {
           )}
         </View>
 
-        {/* Premium upsell banner */}
-        {!premium && sortedWallets.length > 0 && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate(PAGES.PAYWALL)}
-            style={styles.upsellWrapper}
-          >
-            <View
-              style={[
-                styles.upsellBanner,
-                {
-                  backgroundColor: theme['color-basic-600'],
-                  borderColor: theme['transparency-basic-color'],
-                },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="shield-alert"
-                size={22}
-                color={theme['color-primary-500']}
-              />
-              <Text
-                style={[styles.upsellText, { color: theme['text-basic-color'] }]}
-              >
-                Enable sync to protect your wallets from device loss →
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
       </StableSafeArea>
 
       {/* Sort picker modal */}
@@ -519,25 +505,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,
-  },
-  upsellWrapper: {
-    paddingHorizontal: DEFAULT_PADDING,
-    paddingBottom: 32,
-    paddingTop: DEFAULT_1x_MARGIN,
-  },
-  upsellBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: DEFAULT_CORNER_RADIUS,
-    borderWidth: 1,
-    paddingHorizontal: DEFAULT_2x_MARGIN,
-    paddingVertical: DEFAULT_1x_MARGIN + 4,
-    gap: DEFAULT_1x_MARGIN,
-  },
-  upsellText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
   },
   modal: {
     justifyContent: 'flex-end',

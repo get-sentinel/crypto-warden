@@ -70,7 +70,10 @@ function AppStateWatcher() {
 function AppThemed() {
   const colorScheme = useColorScheme();
   const themeMode: ThemeMode = useSelector((state: any) => state.settingsSlice.themeMode ?? 'system');
-  const isDark = themeMode === 'system' ? colorScheme === 'dark' : themeMode === 'dark';
+  const premium: boolean = useSelector((state: any) => state.accountSlice.premium);
+  // Dark mode is a premium feature — free users always get the light theme.
+  const isDark =
+    premium && (themeMode === 'system' ? colorScheme === 'dark' : themeMode === 'dark');
 
   return (
     <ApplicationProvider

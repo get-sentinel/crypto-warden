@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import WalletDetails from './pages/WalletDetails';
 import OnboardingCarousel from './pages/OnboardingCarousel';
 import Paywall from './pages/Paywall';
+import SecurityConfig from './pages/SecurityConfig';
 
 const Stack = createStackNavigator();
 const ONBOARDING_COMPLETED_KEY = '@onboarding_completed';
@@ -65,6 +66,11 @@ const Navigator = () => {
           <Stack.Screen
             name={PAGES.PAYWALL}
             component={Paywall}
+            options={{ headerShown: false, presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name={PAGES.SECURITY_CONFIG}
+            component={SecurityConfig}
             options={{ headerShown: false, presentation: 'modal' }}
           />
         </Stack.Navigator>

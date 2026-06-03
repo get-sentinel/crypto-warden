@@ -55,9 +55,28 @@ export const getValueForKey = (
   synchronizable: boolean,
 ): string => KeychainWrapper.getValueForKey(key, synchronizable);
 
+/**
+ * One-time recovery of wallets stored by the legacy SeedWarden build (different
+ * keychain access group + service after the SeedWarden → Crypto Warden rename).
+ * Idempotent and non-destructive — see the native implementation. Safe to call on
+ * every load; it no-ops once the current store is populated.
+ */
+export const migrateLegacyWallets = (): void => {
+  try {
+    KeychainWrapper.migrateLegacyWalletsIfNeeded?.();
+  } catch {}
+};
+
+/**
+ * Persists wallets to the keychain. Sync is always on (free, not premium-gated):
+ * by default it writes to the synchronizable (iCloud) bucket, merging with any
+ * remote copy first. `fetchWallets` self-heals a local copy on read, so data is
+ * available even without iCloud Keychain. The `synchronizable: false` path is used
+ * only by that self-heal to write the local mirror.
+ */
 export const setWalletsToKeychain = (
   localWallets: WalletData[],
-  synchronizable: boolean = false,
+  synchronizable: boolean = true,
 ): void => {
   let walletsToSave = localWallets;
 
@@ -90,18 +109,53 @@ export const getWalletsFromKeychain = ({
 
 export const fetchWallets = ({
   dispatch,
-  synchronizable,
   localWallets = [],
 }: {
   dispatch: Dispatch<any>;
+  // Accepted for backward compatibility but intentionally ignored for reads — see below.
   synchronizable?: boolean;
   localWallets?: WalletData[];
 }): void => {
-  const remoteWallets = getWalletsFromKeychain({ synchronizable });
+  // iOS Keychain stores synchronizable (iCloud) and non-synchronizable (local)
+  // items as SEPARATE entries, even for the same service + key. A wallet written
+  // while premium lives in the synced bucket and is invisible to a local-only
+  // read (and vice-versa). Gating the read on `premium` therefore hides existing
+  // wallets whenever the premium check is false or hasn't resolved yet — which is
+  // exactly what happens on a fresh install/upgrade before RevenueCat responds.
+  //
+  // Reads must NEVER depend on premium: always union both buckets so wallets
+  // always show. Premium still gates whether we additionally write an iCloud copy
+  // (see setWalletsToKeychain).
+
+  // Recover wallets stranded in the legacy SeedWarden keychain (different bundle
+  // id / access group / service after the rename). No-op once migrated or when the
+  // current store is already populated.
+  migrateLegacyWallets();
+
+  const localStore = getWalletsFromKeychain({ synchronizable: false });
+  const syncedStore = getWalletsFromKeychain({ synchronizable: true });
+  let remoteWallets = mergeWallets(localStore, syncedStore);
 
   if (localWallets.length > 0) {
-    dispatch(loadWallets(mergeWallets(localWallets, remoteWallets)));
-    return;
+    remoteWallets = mergeWallets(localWallets, remoteWallets);
+  }
+
+  // Self-heal the local bucket: persist a non-synchronizable copy of everything
+  // we found so wallets survive even if iCloud Keychain is later disabled (or the
+  // user is no longer premium). Guard rails:
+  //  - never write an empty set (would clobber a populated local store), and
+  //  - only write when something is actually missing locally, to avoid a keychain
+  //    write on every fetch.
+  if (remoteWallets.length > 0) {
+    const localKeys = new Set(
+      localStore.flatMap(w => [w.seedHash, w.seed]).filter(Boolean),
+    );
+    const missingLocally = remoteWallets.some(
+      w => !localKeys.has(w.seedHash) && !localKeys.has(w.seed),
+    );
+    if (missingLocally) {
+      setWalletsToKeychain(remoteWallets, false);
+    }
   }
 
   dispatch(loadWallets(remoteWallets));
