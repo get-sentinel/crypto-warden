@@ -36,6 +36,7 @@ import {
   DEFAULT_PADDING,
   DEFAULT_TEXT_SIZE,
   PAGES,
+  SENTINEL_APPS,
   TOAST_POSITION,
 } from '../utils/constants';
 import { INACTIVITY_OPTIONS, AppSettings, ThemeMode } from '../types/settings.types';
@@ -52,7 +53,6 @@ import {
 import { storeBiometricSentinel, removeBiometricSentinel } from '../storage/KeychainManager';
 const { restorePurchases } = require('../iap/PurchaseIAP');
 
-import AUTHENTICATOR_ICON from '../assets/authenticator.jpg';
 import PREMIUM_BACKGROUND from '../assets/premium-background.png';
 
 type EmailAuthMode = 'signin' | 'signup';
@@ -486,25 +486,45 @@ const Settings = () => {
           />
         </View>
 
-        {/* Authenticator cross-promo */}
-        <View style={[styles.settingsBox, { backgroundColor: theme['color-basic-600'] }]}>
-          <TouchableOpacity
-            style={styles.settingsItem}
-            onPress={() =>
-              openURL('https://apps.apple.com/it/app/sentinel-authenticator-2fa/id1189922806')
-            }
-          >
-            <View style={styles.settingsTextAndIcon}>
-              <View style={styles.appIconWrapper}>
-                <Image source={AUTHENTICATOR_ICON} style={styles.appIcon} />
-              </View>
-              <Text style={[styles.settingsText, { color: theme['text-basic-color'] }]}>
-                Try our 2FA Authenticator app
-              </Text>
+        {/* Cross-promo: our other apps. App Store only, so hidden on Android. */}
+        {Platform.OS === 'ios' && (
+          <>
+            <Text style={[styles.sectionLabel, { color: theme['text-hint-color'] }]}>
+              MORE FROM SENTINEL
+            </Text>
+            <View style={[styles.settingsBox, { backgroundColor: theme['color-basic-600'] }]}>
+              {SENTINEL_APPS.map((app, index) => (
+                <React.Fragment key={app.id}>
+                  {index > 0 && (
+                    <Divider
+                      style={[styles.divider, { backgroundColor: theme['card-border-color'] }]}
+                    />
+                  )}
+                  <TouchableOpacity style={styles.appItem} onPress={() => openURL(app.url)}>
+                    <View style={styles.settingsTextAndIcon}>
+                      <View style={styles.appIconWrapper}>
+                        <Image source={app.icon} style={styles.appIcon} />
+                      </View>
+                      <View>
+                        <Text style={[styles.settingsText, { color: theme['text-basic-color'] }]}>
+                          {app.name}
+                        </Text>
+                        <Text style={[styles.appSubtitle, { color: theme['text-hint-color'] }]}>
+                          {app.subtitle}
+                        </Text>
+                      </View>
+                    </View>
+                    <Icon
+                      name="diagonal-arrow-right-up-outline"
+                      fill={theme['text-hint-color']}
+                      style={styles.chevronIcon}
+                    />
+                  </TouchableOpacity>
+                </React.Fragment>
+              ))}
             </View>
-            <Icon name="diagonal-arrow-right-up-outline" fill={theme['text-hint-color']} style={styles.chevronIcon} />
-          </TouchableOpacity>
-        </View>
+          </>
+        )}
 
         {/* Support section */}
         <View style={[styles.settingsBox, { backgroundColor: theme['color-basic-600'] }]}>
@@ -942,12 +962,33 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   appIconWrapper: {
-    marginRight: 10,
+    marginRight: 12,
   },
   appIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+  },
+  appItem: {
+    display: 'flex',
+    width: '100%',
+    height: 68,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+  },
+  appSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    marginBottom: 8,
+    // Aligns with settingsBox, which sits at marginHorizontal: 20.
+    marginLeft: 24,
   },
   modal: {
     justifyContent: 'flex-end',

@@ -20,9 +20,47 @@ import BLUE_IMAGE from '../assets/walletIcons/blue.png';
 import ATOMIC_IMAGE from '../assets/walletIcons/atomic.png';
 import XDEFI_IMAGE from '../assets/walletIcons/xdefi.png';
 import APP_ICON_IMAGE from '../assets/app-icon.png';
+import AUTHENTICATOR_ICON from '../assets/authenticator.jpg';
+import SQUIDLY_ICON from '../assets/squidly/icon.png';
 
 export const APP_STORE_IOS_ID = '1663191731';
 export const PLAY_STORE_ANDROID_ID = 'com.seedwarden';
+
+// ── Cross-promo: our other apps ───────────────────────────────────────────────
+// Both Squidly and Sentinel Authenticator ship on the App Store only — neither
+// has a Play Store listing — so every cross-promo surface is gated to iOS.
+export const SQUIDLY_APP_STORE_ID = '6802036002';
+export const SQUIDLY_APP_STORE_URL = `https://apps.apple.com/app/id${SQUIDLY_APP_STORE_ID}`;
+export const SQUIDLY_APP_STORE_DEEP_LINK = `itms-apps://apps.apple.com/app/id${SQUIDLY_APP_STORE_ID}`;
+export const SENTINEL_AUTH_APP_STORE_URL =
+  'https://apps.apple.com/app/sentinel-authenticator-2fa/id1189922806';
+
+// Squidly's brand purple, sampled from its app icon.
+export const SQUIDLY_BRAND = {
+  light: '#7C5CE6',
+  base: '#4B3399',
+  dark: '#2A1A5E',
+} as const;
+
+// The one-time Squidly promo sheet on Home is remembered under this AsyncStorage key.
+export const SQUIDLY_PROMO_SHOWN_KEY = '@squidly_promo_shown';
+
+export const SENTINEL_APPS = [
+  {
+    id: 'squidly',
+    name: 'Squidly',
+    subtitle: 'Track your crypto portfolio',
+    icon: SQUIDLY_ICON,
+    url: SQUIDLY_APP_STORE_URL,
+  },
+  {
+    id: 'authenticator',
+    name: 'Sentinel Authenticator',
+    subtitle: '2FA codes, kept on your device',
+    icon: AUTHENTICATOR_ICON,
+    url: SENTINEL_AUTH_APP_STORE_URL,
+  },
+] as const;
 
 export const PAGES = {
   HOME: 'home',

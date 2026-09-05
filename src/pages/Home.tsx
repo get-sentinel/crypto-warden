@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   NativeEventEmitter,
@@ -20,7 +20,8 @@ import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { WalletData } from '../types/wallet.types';
 import { addNewWalletFromURL, sortWallets } from '../utils/utils';
@@ -31,6 +32,7 @@ import {
   DEFAULT_CORNER_RADIUS,
   DEFAULT_PADDING,
   PAGES,
+  SQUIDLY_PROMO_SHOWN_KEY,
   TOAST_POSITION,
   TOP_NAV_TITLE_SIZE,
   TOP_NAV_TITLE_WEIGHT,
@@ -48,11 +50,15 @@ import StableSafeArea from '../components/safeArea/StableSafeArea';
 import WalletCell from '../components/cells/WalletCell';
 import TagFilterBar from '../components/chips/TagFilterBar';
 import URLImportConfirmModal from '../components/modals/URLImportConfirmModal';
+import SquidlyPromoModal from '../components/modals/SquidlyPromoModal';
 
 import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png';
 // checkPremium is in the gitignored src/iap/ directory — copy revenueCatConfig.template.json and PurchaseIAP.template.ts to set up locally
 const { checkPremium } = require('../iap/PurchaseIAP');
 const revenueCatConfig = require('../revenueCatConfig/revenueCatConfig.json');
+
+// Let the Home transition settle before the cross-promo sheet slides up.
+const SQUIDLY_PROMO_DELAY_MS = 900;
 
 const SORT_OPTIONS = [
   { icon: 'sort-calendar-ascending',    label: 'Date (oldest first)' },
@@ -66,6 +72,7 @@ export default function Home() {
   const theme = useTheme();
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
 
   const wallets: WalletData[] = useSelector((state: any) => state.walletSlice.wallets);
   const pendingURLWallet: WalletData | undefined = useSelector(
@@ -74,12 +81,15 @@ export default function Home() {
   const securityOption: string = useSelector((state: any) => state.accountSlice.securityOption);
   const uid: string | undefined = useSelector((state: any) => state.accountSlice.uid);
   const password: string | undefined = useSelector((state: any) => state.accountSlice.password);
+  const isLocked: boolean = useSelector((state: any) => state.settingsSlice.isLocked);
 
   const [sorting, setSorting] = useState(0);
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [squidlyPromoVisible, setSquidlyPromoVisible] = useState(false);
+  const squidlyPromoHandled = useRef(false);
 
   // ── Setup ────────────────────────────────────────────────────────────────────
 
@@ -142,6 +152,37 @@ export default function Home() {
     if (!securityOption) return;
     getWalletsAndDispatch({ dispatch, securityOption, uid, password });
   }, [dispatch, securityOption, uid, password]);
+
+  // One-shot Squidly cross-promo. Gated on Home actually being focused so it can
+  // never stack on top of the paywall/onboarding hand-off or the biometric lock
+  // screen, and on iOS because Squidly has no Play Store listing.
+  useEffect(() => {
+    if (Platform.OS !== 'ios' || !isFocused || isLocked || squidlyPromoHandled.current) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        if (await AsyncStorage.getItem(SQUIDLY_PROMO_SHOWN_KEY)) {
+          squidlyPromoHandled.current = true;
+          return;
+        }
+        // Recorded before showing, so force-quitting the app with the sheet open
+        // doesn't bring the promo back on the next launch.
+        await AsyncStorage.setItem(SQUIDLY_PROMO_SHOWN_KEY, 'true');
+        squidlyPromoHandled.current = true;
+        if (!cancelled) setSquidlyPromoVisible(true);
+      } catch {
+        // A cross-promo is never worth breaking Home over.
+      }
+    }, SQUIDLY_PROMO_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isFocused, isLocked]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
 
@@ -402,6 +443,11 @@ export default function Home() {
           ))}
         </View>
       </RNModal>
+
+      <SquidlyPromoModal
+        visible={squidlyPromoVisible}
+        onClose={() => setSquidlyPromoVisible(false)}
+      />
 
       {/* URL import confirmation dialog */}
       {pendingURLWallet && (
