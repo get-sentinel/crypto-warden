@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   FlatList,
   NativeEventEmitter,
   NativeModules,
@@ -10,7 +12,6 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
-  Image,
 } from 'react-native';
 import { Text, useTheme } from '@ui-kitten/components';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -51,6 +52,11 @@ import WalletCell from '../components/cells/WalletCell';
 import TagFilterBar from '../components/chips/TagFilterBar';
 import URLImportConfirmModal from '../components/modals/URLImportConfirmModal';
 import SquidlyPromoModal from '../components/modals/SquidlyPromoModal';
+import FadeSlideIn from '../components/animated/FadeSlideIn';
+import FloatingHero from '../components/animated/FloatingHero';
+import PressableScale from '../components/animated/PressableScale';
+import PulseHalo from '../components/animated/PulseHalo';
+import { useReduceMotion } from '../utils/useReduceMotion';
 
 import DEFAULT_IMAGE from '../assets/onboarding/onboarding1.png';
 // checkPremium is in the gitignored src/iap/ directory — copy revenueCatConfig.template.json and PurchaseIAP.template.ts to set up locally
@@ -59,6 +65,21 @@ const revenueCatConfig = require('../revenueCatConfig/revenueCatConfig.json');
 
 // Let the Home transition settle before the cross-promo sheet slides up.
 const SQUIDLY_PROMO_DELAY_MS = 900;
+
+// Entrance offsets, in milliseconds. The chrome resolves top-down before the
+// wallet rows cascade in (WalletCell owns its own per-row stagger).
+const ENTER_TITLE_MS = 60;
+const ENTER_SEARCH_MS = 120;
+const ENTER_TAGS_MS = 170;
+const ENTER_EMPTY_TEXT_MS = 220;
+const ENTER_EMPTY_CTA_MS = 300;
+
+// Intrinsic aspect ratio of the wallet-grid artwork (5385x3465). The hero box is
+// sized from it and the image simply fills that box. Sizing the image from its
+// own intrinsic dimensions instead lets RN's measured height (3465pt) leak into
+// the animated wrapper — which, unlike the flex parent it used to sit directly
+// in, has nothing to bound it — and shoves the copy far below the fold.
+const HERO_ASPECT_RATIO = 5385 / 3465;
 
 const SORT_OPTIONS = [
   { icon: 'sort-calendar-ascending',    label: 'Date (oldest first)' },
@@ -89,7 +110,15 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [squidlyPromoVisible, setSquidlyPromoVisible] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const squidlyPromoHandled = useRef(false);
+
+  const reduceMotion = useReduceMotion();
+  const searchFocus = useRef(new Animated.Value(0)).current;
+  const sortPop = useRef(new Animated.Value(1)).current;
+  const syncSpin = useRef(new Animated.Value(0)).current;
+  const sortSettled = useRef(false);
 
   // ── Setup ────────────────────────────────────────────────────────────────────
 
@@ -184,7 +213,80 @@ export default function Home() {
     };
   }, [isFocused, isLocked]);
 
+  // ── Animations ───────────────────────────────────────────────────────────────
+
+  // Accent ring around the search field, tied to focus.
+  useEffect(() => {
+    Animated.timing(searchFocus, {
+      toValue: searchFocused ? 1 : 0,
+      duration: reduceMotion ? 0 : 180,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [reduceMotion, searchFocus, searchFocused]);
+
+  // Pop the toolbar icon whenever the order changes — the choice is made inside
+  // a sheet that is already dismissed by the time the icon swaps, so without
+  // this the only feedback is a glyph quietly changing behind the backdrop.
+  useEffect(() => {
+    if (!sortSettled.current) {
+      sortSettled.current = true; // Skip the mount, animate every change after.
+      return;
+    }
+    if (reduceMotion) return;
+
+    sortPop.setValue(0);
+    const pop = Animated.spring(sortPop, {
+      toValue: 1,
+      friction: 5,
+      tension: 90,
+      useNativeDriver: true,
+    });
+    pop.start();
+
+    return () => pop.stop();
+  }, [reduceMotion, sortPop, sorting]);
+
+  // Spin the cloud glyph for as long as a sync is actually in flight.
+  useEffect(() => {
+    if (!isSyncing || reduceMotion) {
+      syncSpin.setValue(0);
+      return;
+    }
+
+    const loop = Animated.loop(
+      Animated.timing(syncSpin, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+
+    return () => loop.stop();
+  }, [isSyncing, reduceMotion, syncSpin]);
+
   // ── Derived data ─────────────────────────────────────────────────────────────
+
+  const sortIconStyle = useMemo(
+    () => ({
+      transform: [
+        { scale: sortPop.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) },
+        { rotate: sortPop.interpolate({ inputRange: [0, 1], outputRange: ['-30deg', '0deg'] }) },
+      ],
+    }),
+    [sortPop],
+  );
+
+  const syncIconStyle = useMemo(
+    () => ({
+      transform: [
+        { rotate: syncSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
+      ],
+    }),
+    [syncSpin],
+  );
 
   const sortedWallets = useMemo(() => sortWallets(wallets, sorting), [wallets, sorting]);
 
@@ -228,15 +330,20 @@ export default function Home() {
 
   const handleSync = useCallback(async () => {
     // Sync is free for everyone.
-    await getWalletsAndDispatch({ dispatch, securityOption, uid, password, local: wallets });
-    Toast.show({
-      type: 'success',
-      position: TOAST_POSITION,
-      text1: 'Sync completed',
-      text2: 'Your wallets are up to date',
-      visibilityTime: 2000,
-      props: { iconName: 'check-circle' },
-    });
+    setIsSyncing(true);
+    try {
+      await getWalletsAndDispatch({ dispatch, securityOption, uid, password, local: wallets });
+      Toast.show({
+        type: 'success',
+        position: TOAST_POSITION,
+        text1: 'Sync completed',
+        text2: 'Your wallets are up to date',
+        visibilityTime: 2000,
+        props: { iconName: 'check-circle' },
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   }, [dispatch, securityOption, uid, password, wallets]);
 
   const handleToggleTag = useCallback((tag: string) => {
@@ -272,77 +379,107 @@ export default function Home() {
         <View style={[styles.container, { backgroundColor: theme['color-basic-500'] }]}>
 
           {/* Toolbar */}
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.navigate(PAGES.SETTINGS)}
-            >
-              <MaterialCommunityIcons
-                name="cog-outline"
-                size={26}
-                color={theme['unselected-icon-color']}
-              />
-            </TouchableOpacity>
-
-            <View style={styles.toolbarRight}>
-              <TouchableOpacity
+          <FadeSlideIn>
+            <View style={styles.toolbar}>
+              <PressableScale
                 style={styles.iconButton}
-                onPress={() => setSortModalVisible(true)}
+                scaleTo={0.85}
+                onPress={() => navigation.navigate(PAGES.SETTINGS)}
               >
                 <MaterialCommunityIcons
-                  name={SORT_OPTIONS[sorting].icon}
+                  name="cog-outline"
                   size={26}
                   color={theme['unselected-icon-color']}
                 />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.addButton, { backgroundColor: theme['color-primary-500'] }]}
-                onPress={handleAddWallet}
-              >
-                <MaterialCommunityIcons name="plus" size={20} color="#ffffff" />
-              </TouchableOpacity>
+              </PressableScale>
+
+              <View style={styles.toolbarRight}>
+                <PressableScale
+                  style={styles.iconButton}
+                  scaleTo={0.85}
+                  onPress={() => setSortModalVisible(true)}
+                >
+                  <Animated.View style={sortIconStyle}>
+                    <MaterialCommunityIcons
+                      name={SORT_OPTIONS[sorting].icon}
+                      size={26}
+                      color={theme['unselected-icon-color']}
+                    />
+                  </Animated.View>
+                </PressableScale>
+                <PressableScale
+                  style={[styles.addButton, { backgroundColor: theme['color-primary-500'] }]}
+                  scaleTo={0.88}
+                  onPress={handleAddWallet}
+                >
+                  <MaterialCommunityIcons name="plus" size={20} color="#ffffff" />
+                </PressableScale>
+              </View>
             </View>
-          </View>
+          </FadeSlideIn>
 
           {/* Title */}
-          <Text
-            style={[
-              styles.title,
-              { color: theme['text-basic-color'], fontWeight: TOP_NAV_TITLE_WEIGHT as any },
-            ]}
-          >
-            CryptoWarden
-          </Text>
+          <FadeSlideIn delay={ENTER_TITLE_MS}>
+            <Text
+              style={[
+                styles.title,
+                { color: theme['text-basic-color'], fontWeight: TOP_NAV_TITLE_WEIGHT as any },
+              ]}
+            >
+              CryptoWarden
+            </Text>
+          </FadeSlideIn>
 
           {/* Search bar */}
-          <View style={[styles.searchBar, { backgroundColor: theme['color-basic-600'] }]}>
-            <MaterialCommunityIcons name="magnify" size={20} color={theme['text-hint-color']} />
-            <TextInput
-              placeholder="Search wallets..."
-              placeholderTextColor={theme['text-hint-color']}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              style={[styles.searchInput, { color: theme['text-basic-color'] }]}
-              clearButtonMode="while-editing"
-            />
-          </View>
+          <FadeSlideIn delay={ENTER_SEARCH_MS}>
+            <View style={[styles.searchBar, { backgroundColor: theme['color-basic-600'] }]}>
+              {/* Focus ring drawn as an overlay so it can fade on the native
+                  driver — animating borderColor would fall back to JS. */}
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  styles.searchRing,
+                  { borderColor: theme['color-primary-500'], opacity: searchFocus },
+                ]}
+              />
+              <MaterialCommunityIcons
+                name="magnify"
+                size={20}
+                color={searchFocused ? theme['color-primary-500'] : theme['text-hint-color']}
+              />
+              <TextInput
+                placeholder="Search wallets..."
+                placeholderTextColor={theme['text-hint-color']}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                style={[styles.searchInput, { color: theme['text-basic-color'] }]}
+                clearButtonMode="while-editing"
+              />
+            </View>
+          </FadeSlideIn>
 
           {/* Tag filter bar */}
-          <TagFilterBar
-            tags={allTags}
-            activeTags={activeTags}
-            onToggleTag={handleToggleTag}
-            onClearAll={() => setActiveTags([])}
-          />
+          <FadeSlideIn delay={ENTER_TAGS_MS}>
+            <TagFilterBar
+              tags={allTags}
+              activeTags={activeTags}
+              onToggleTag={handleToggleTag}
+              onClearAll={() => setActiveTags([])}
+            />
+          </FadeSlideIn>
 
           {/* Wallet list or empty state */}
           {displayedWallets.length > 0 ? (
             <FlatList
               data={displayedWallets}
               keyExtractor={item => String(item.id)}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <WalletCell
                   item={item}
+                  index={index}
                   onPress={() => {
                     dispatch(setSelectedWallet(item));
                     navigation.navigate(PAGES.WALLET_DETAILS);
@@ -360,32 +497,51 @@ export default function Home() {
             <View style={styles.emptyState}>
               {wallets.length === 0 ? (
                 <>
-                  <Image
+                  <FloatingHero
                     source={DEFAULT_IMAGE}
-                    style={styles.emptyImage}
-                    resizeMode="contain"
+                    glowColor={theme['color-primary-500']}
+                    style={styles.emptyHero}
+                    imageStyle={styles.emptyImage}
                   />
-                  <Text
-                    style={[styles.emptyText, { color: theme['text-hint-color'] }]}
-                  >
-                    {"CryptoWarden keeps your seed phrases encrypted on your device.\nOnly you can access them.\n\nAnd it's open-source."}
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.syncButton,
-                      { backgroundColor: theme['color-primary-500'] },
-                    ]}
-                    onPress={handleSync}
-                    activeOpacity={0.85}
-                  >
-                    <MaterialCommunityIcons name="cloud-sync-outline" size={20} color="#fff" />
-                    <Text style={styles.syncButtonText}>Sync Wallets</Text>
-                  </TouchableOpacity>
+                  <FadeSlideIn delay={ENTER_EMPTY_TEXT_MS}>
+                    <Text
+                      style={[styles.emptyText, { color: theme['text-hint-color'] }]}
+                    >
+                      {"CryptoWarden keeps your seed phrases encrypted on your device.\nOnly you can access them.\n\nAnd it's open-source."}
+                    </Text>
+                  </FadeSlideIn>
+                  <FadeSlideIn delay={ENTER_EMPTY_CTA_MS} style={styles.syncButtonWrapper}>
+                    <PulseHalo
+                      color={theme['color-primary-500']}
+                      borderRadius={styles.syncButton.borderRadius}
+                    />
+                    <PressableScale
+                      style={[
+                        styles.syncButton,
+                        { backgroundColor: theme['color-primary-500'] },
+                      ]}
+                      scaleTo={0.97}
+                      onPress={handleSync}
+                    >
+                      <Animated.View style={syncIconStyle}>
+                        <MaterialCommunityIcons
+                          name="cloud-sync-outline"
+                          size={20}
+                          color="#fff"
+                        />
+                      </Animated.View>
+                      <Text style={styles.syncButtonText}>
+                        {isSyncing ? 'Syncing…' : 'Sync Wallets'}
+                      </Text>
+                    </PressableScale>
+                  </FadeSlideIn>
                 </>
               ) : (
-                <Text style={[styles.emptyText, { color: theme['text-hint-color'] }]}>
-                  No wallets match your search.
-                </Text>
+                <FadeSlideIn>
+                  <Text style={[styles.emptyText, { color: theme['text-hint-color'] }]}>
+                    No wallets match your search.
+                  </Text>
+                </FadeSlideIn>
               )}
             </View>
           )}
@@ -509,6 +665,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 0,
   },
+  searchRing: {
+    borderRadius: 22,
+    borderWidth: 2,
+  },
   list: {
     marginTop: DEFAULT_2x_MARGIN,
   },
@@ -521,16 +681,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: DEFAULT_3x_MARGIN,
   },
-  emptyImage: {
+  emptyHero: {
     width: '100%',
+    aspectRatio: HERO_ASPECT_RATIO,
     maxHeight: 260,
     marginBottom: DEFAULT_3x_MARGIN,
+  },
+  emptyImage: {
+    width: '100%',
+    height: '100%',
   },
   emptyText: {
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: DEFAULT_3x_MARGIN,
+  },
+  syncButtonWrapper: {
+    width: '100%',
   },
   syncButton: {
     flexDirection: 'row',

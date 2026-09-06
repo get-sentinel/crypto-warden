@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from '@ui-kitten/components';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WalletData } from '../../types/wallet.types';
@@ -7,23 +7,33 @@ import { CHAIN_NETWORK_META } from '../../utils/constants';
 import { cropWalletAddress } from '../../utils/utils';
 import TagChip from '../chips/TagChip';
 import ChainIcon from '../ChainIcon';
+import FadeSlideIn from '../animated/FadeSlideIn';
+import PressableScale from '../animated/PressableScale';
 
 interface Props {
   item: WalletData;
   onPress: () => void;
+  /** Row position, used to cascade the entrance down the list. */
+  index?: number;
 }
 
-export default function WalletCell({ item, onPress }: Props) {
+const STAGGER_STEP_MS = 45;
+// Rows past the first screenful are recycled as the list scrolls, so animating
+// them would re-play the entrance mid-scroll. Only the initially visible ones
+// cascade; the rest mount already in place.
+const LAST_STAGGERED_INDEX = 8;
+
+export default function WalletCell({ item, onPress, index = 0 }: Props) {
   const theme = useTheme();
   const chainMeta = item.chain ? CHAIN_NETWORK_META[item.chain] : undefined;
   const accentColor = chainMeta?.color ?? theme['text-hint-color'];
   const visibleTags = (item.tags ?? []).slice(0, 2);
 
-  return (
-    <TouchableOpacity
+  const card = (
+    <PressableScale
       onPress={onPress}
       style={[styles.card, { backgroundColor: theme['color-basic-600'] }]}
-      activeOpacity={0.75}
+      scaleTo={0.975}
     >
       {/* Chain icon */}
       <View style={styles.icon}>
@@ -78,7 +88,15 @@ export default function WalletCell({ item, onPress }: Props) {
         color={theme['text-hint-color']}
         style={styles.chevron}
       />
-    </TouchableOpacity>
+    </PressableScale>
+  );
+
+  if (index > LAST_STAGGERED_INDEX) return card;
+
+  return (
+    <FadeSlideIn delay={index * STAGGER_STEP_MS} distance={18}>
+      {card}
+    </FadeSlideIn>
   );
 }
 
