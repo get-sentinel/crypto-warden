@@ -85,4 +85,4 @@ If you have troubles and want to run it on your own write me at [hello@getsentin
 </div>
 
 ## Other apps from Sentinel
-If you like Crypto Warden you may have a look also at my [2FA Authenticator](https:/getsentinel.io) app.
+If you like Crypto Warden you may have a look also at my other apps, like Squidly and the 2FA Authenticator. You can find and download all of them at [getsentinel.io](https://getsentinel.io).
