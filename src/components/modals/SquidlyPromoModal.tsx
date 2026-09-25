@@ -47,12 +47,21 @@ export default function SquidlyPromoModal({ visible, onClose }: Props) {
 
   // Prefer the App Store app itself so the CTA lands on an installable page
   // rather than a Safari interstitial; fall back to the web listing.
+  //
+  // Deliberately no canOpenURL() gate: with no LSApplicationQueriesSchemes entry
+  // for itms-apps, RCTLinkingManager *rejects* that query rather than resolving
+  // false, so the rejection landed in the catch, openURL was never reached, and
+  // the tap did nothing but dismiss the sheet. Attempt-then-fall-back is also
+  // what openStoreFallback in Settings does.
   const handleGet = async () => {
     try {
-      const canOpen = await Linking.canOpenURL(SQUIDLY_APP_STORE_DEEP_LINK);
-      await Linking.openURL(canOpen ? SQUIDLY_APP_STORE_DEEP_LINK : SQUIDLY_APP_STORE_URL);
+      await Linking.openURL(SQUIDLY_APP_STORE_DEEP_LINK);
     } catch {
-      // Store unavailable or the user backed out — nothing to recover from.
+      try {
+        await Linking.openURL(SQUIDLY_APP_STORE_URL);
+      } catch {
+        // No App Store and no browser — nothing left to recover from.
+      }
     } finally {
       onClose();
     }
@@ -69,7 +78,12 @@ export default function SquidlyPromoModal({ visible, onClose }: Props) {
       onSwipeComplete={onClose}
       swipeDirection="down"
       backdropOpacity={0.7}
-      useNativeDriver
+      // No useNativeDriver: react-native-modal pairs it with swipeDirection by
+      // putting raw Animated.Values in the sheet's `transform`, which its own
+      // hard-coded `transform: [{translateY: 0}]` then shadows. Animated sees no
+      // node left to drive, passes the style through to a plain View, and the
+      // transform validator throws on the Animated.Value. Every other modal here
+      // omits it too.
       style={styles.modal}
     >
       <View
@@ -137,12 +151,25 @@ export default function SquidlyPromoModal({ visible, onClose }: Props) {
 
         {/* ── Pitch ── */}
         <View style={styles.body}>
+          {/* Say plainly whose app this is: the pitch only lands if the trust
+              CryptoWarden has already earned carries over to Squidly. */}
+          <View style={[styles.byline, { backgroundColor: SQUIDLY_BRAND.light + '1F' }]}>
+            <MaterialCommunityIcons
+              name="shield-check-outline"
+              size={13}
+              color={SQUIDLY_BRAND.light}
+            />
+            <Text style={[styles.bylineText, { color: SQUIDLY_BRAND.light }]}>
+              From the makers of CryptoWarden
+            </Text>
+          </View>
+
           <Text style={[styles.title, { color: theme['text-basic-color'] }]}>
             Your portfolio, one number
           </Text>
           <Text style={[styles.subtitle, { color: theme['text-hint-color'] }]}>
-            CryptoWarden keeps your seed phrases safe. Squidly shows you what
-            they're worth — every wallet and exchange in one live net worth.
+            Built by the same developer. CryptoWarden guards your seed phrases
+            — Squidly shows what they're worth, in one live net worth.
           </Text>
 
           <View style={styles.features}>
@@ -290,6 +317,21 @@ const styles = StyleSheet.create({
     paddingTop: DEFAULT_2x_MARGIN,
     paddingBottom: 34,
   },
+  byline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    marginBottom: 10,
+  },
+  bylineText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
   title: {
     fontSize: 21,
     fontWeight: '800',
@@ -328,7 +370,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 15,
+    // Explicit height, not vertical padding: the gradient <Svg> inside is
+    // height="100%", and a percentage only resolves against a parent whose
+    // height is already definite. With a padding-derived height it stayed
+    // unresolved, so the gradient painted short and the bottom half of the
+    // white label landed on the white sheet — invisible. The hero works
+    // because it sets an explicit height too.
+    height: 52,
     borderRadius: 15,
     overflow: 'hidden',
   },

@@ -1,12 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Dimensions,
   FlatList,
   Image,
   Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Text, useTheme } from '@ui-kitten/components';
@@ -25,8 +25,6 @@ import {
 } from '../firebase/firebaseAuth';
 
 import ONBOARDING1 from '../assets/onboarding/onboarding1.png';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ONBOARDING_COMPLETED_KEY = '@onboarding_completed';
 
@@ -82,6 +80,16 @@ export default function OnboardingCarousel() {
   const listRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // The carousel viewport is narrower than the window: StableSafeArea pads the
+  // tree by the horizontal safe-area insets. Paging math must use the list's
+  // *actual* width, not the window width — otherwise (notably on macOS, where
+  // the insets are non-zero) every offset overshoots, pagingEnabled snaps back,
+  // and "Continue" appears to do nothing. We measure it via onLayout below and
+  // fall back to the window width only for the first frame before measurement.
+  const { width: screenWidth } = useWindowDimensions();
+  const [pageWidth, setPageWidth] = useState(0);
+  const width = pageWidth || screenWidth;
+
   // Email auth state (used on last sign-in slide)
   const [emailMode, setEmailMode] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -96,10 +104,20 @@ export default function OnboardingCarousel() {
 
   const primary = theme['color-primary-500'];
 
+  // Drive the scroll position declaratively from the active index. This is the
+  // single mechanism that moves the carousel — for the Continue button, manual
+  // swipes, and macOS window resizes alike — so a slide change can never fail to
+  // take effect. It only runs once the real width is known.
+  useEffect(() => {
+    if (!pageWidth) return;
+    listRef.current?.scrollToOffset({
+      offset: activeIndex * pageWidth,
+      animated: true,
+    });
+  }, [activeIndex, pageWidth]);
+
   const handleNext = () => {
-    const next = activeIndex + 1;
-    listRef.current?.scrollToIndex({ index: next, animated: true });
-    setActiveIndex(next);
+    setActiveIndex(i => Math.min(i + 1, SLIDES.length - 1));
   };
 
   const completeOnboarding = async () => {
@@ -160,7 +178,7 @@ export default function OnboardingCarousel() {
   // ── Slide renderers ──────────────────────────────────────────────────────────
 
   const renderInfoSlide = (item: InfoSlide) => (
-    <View style={styles.slide}>
+    <View style={[styles.slide, { width }]}>
       {/* Hero illustration with concentric halo */}
       <View style={styles.heroContainer}>
         <View style={[styles.haloOuter, { backgroundColor: primary + '0A' }]} />
@@ -187,7 +205,7 @@ export default function OnboardingCarousel() {
   );
 
   const renderSignInSlide = () => (
-    <View style={styles.slide}>
+    <View style={[styles.slide, { width }]}>
       <View style={styles.signInTop}>
         <View style={[styles.shieldCircle, { backgroundColor: primary + '1F' }]}>
           <View style={[styles.shieldCircleInner, { backgroundColor: primary + '33' }]}>
@@ -373,8 +391,15 @@ export default function OnboardingCarousel() {
           renderItem={({ item }) =>
             item.type === 'info' ? renderInfoSlide(item) : renderSignInSlide()
           }
+          onLayout={e => setPageWidth(e.nativeEvent.layout.width)}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
           onMomentumScrollEnd={e => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+            if (!width) return;
+            const index = Math.round(e.nativeEvent.contentOffset.x / width);
             setActiveIndex(index);
           }}
         />
@@ -435,8 +460,8 @@ const styles = StyleSheet.create({
   },
 
   // ── Slide layout ────────────────────────────────────────────────────────────
+  // Width is applied inline from useWindowDimensions so slides track resizing.
   slide: {
-    width: SCREEN_WIDTH,
     flex: 1,
     paddingHorizontal: 28,
   },
