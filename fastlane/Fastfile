@@ -1,0 +1,173 @@
+default_platform(:ios)
+
+WORKSPACE = "ios/crypto-warden.xcworkspace"
+PROJECT = "ios/crypto-warden.xcodeproj"
+SCHEME = "CryptoWarden"
+APP_IDENTIFIER = "com.sentinel.warden"
+
+# Build number to fall back on when App Store Connect reports nothing for this
+# app yet.
+INITIAL_BUILD_NUMBER = 0
+
+def asc_api_key
+  key_id = ENV.fetch("ASC_KEY_ID")
+  app_store_connect_api_key(
+    key_id: key_id,
+    issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+    key_filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{key_id}.p8"),
+  )
+end
+
+platform :ios do
+  desc "Build a Release archive and ship it to TestFlight"
+  lane :beta do |options|
+    api_key = asc_api_key
+
+    # Apple rejects a build number it has already seen for this version, and the
+    # local counter drifts ahead whenever someone archives without uploading —
+    # it is on 16 while TestFlight has 14. Take whichever is higher so the
+    # number is both free and never moves backwards.
+    uploaded = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      initial_build_number: INITIAL_BUILD_NUMBER,
+    )
+    local = get_build_number(xcodeproj: PROJECT).to_i
+    next_build = [uploaded, local].max + 1
+
+    UI.message("TestFlight has #{uploaded}, project has #{local} — building #{next_build}.")
+    increment_build_number(xcodeproj: PROJECT, build_number: next_build)
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build/fastlane",
+      output_name: "CryptoWarden.ipa",
+      # The project has SUPPORTS_MACCATALYST = YES, which puts gym on its
+      # Catalyst detection path (Gym.project.supports_mac_catalyst? == true).
+      # There building_for_ios? requires catalyst_platform == "ios" and
+      # building_for_mac? requires "macos" — leaving this unset satisfies
+      # neither, gym silently skips the export, and returns a nil IPA path
+      # that fails upload_to_testflight downstream with "No ipa or pkg file
+      # given" even though the archive itself succeeded.
+      catalyst_platform: "ios",
+      # Opt-in, because a clean archive rebuilds the whole Firebase/gRPC C++
+      # tree from source — hours of work for a JS-only change. Pass clean:true
+      # when something native actually moved.
+      clean: options[:clean].to_s == "true",
+      # Signing is automatic in the project; let Xcode pull down or refresh the
+      # distribution profile instead of pinning one here.
+      xcargs: "-allowProvisioningUpdates",
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      # Processing on Apple's side takes several minutes and tells us nothing
+      # we can act on, so hand off and return.
+      skip_waiting_for_build_processing: true,
+    )
+
+    UI.success("Uploaded build #{next_build} — it will appear in TestFlight once Apple finishes processing.")
+  end
+
+  desc "Export and upload an already-built archive, without rebuilding (fastlane ios upload_archive archive_path:...)."
+  lane :upload_archive do |options|
+    api_key = asc_api_key
+
+    archive_path = options[:archive_path] || Dir[File.join(File.expand_path("~/Library/Developer/Xcode/Archives/**/*.xcarchive"))].max_by { |f| File.mtime(f) }
+    UI.user_error!("No archive found. Pass archive_path:/path/to/App.xcarchive.") if archive_path.nil?
+    UI.message("Exporting #{archive_path}")
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build/fastlane",
+      output_name: "CryptoWarden.ipa",
+      skip_build_archive: true,
+      archive_path: archive_path,
+      catalyst_platform: "ios",
+      xcargs: "-allowProvisioningUpdates",
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      skip_waiting_for_build_processing: true,
+    )
+
+    UI.success("Uploaded #{archive_path} — it will appear in TestFlight once Apple finishes processing.")
+  end
+end
+
+# --- macOS (Mac Catalyst) ----------------------------------------------------
+#
+# Same scheme, same Info.plist/build-setting version numbers as iOS — this is
+# Mac Catalyst, not a second codebase — built for
+# `platform=macOS,variant=Mac Catalyst` and exported as a .pkg. It ships to the
+# macOS platform of the same App Store Connect record the iOS build goes to
+# (confirmed present: that record already carries osx builds up to 16).
+#
+# Signing differs from iOS in two ways: gym's Catalyst detection needs
+# catalyst_platform: "macos" (see the comment on the iOS beta lane above for
+# why leaving it unset silently drops the export), and the .pkg wrapper is
+# signed by a *3rd Party Mac Developer Installer* certificate — a different
+# slot from the Apple Distribution certificate that signs the app inside it.
+platform :mac do
+  desc "Build a Release Mac Catalyst archive and ship it to TestFlight"
+  lane :beta do |options|
+    api_key = asc_api_key
+
+    installer_identities = `security find-identity -v 2>/dev/null`
+    installer_cert = installer_identities[/"((?:3rd Party Mac Developer|Developer ID) Installer: [^"]*)"/, 1]
+    UI.user_error!("No Mac installer certificate in this keychain (need a '3rd Party Mac Developer Installer' or 'Developer ID Installer' cert).") if installer_cert.nil?
+
+    # macOS and iOS builds share the same CURRENT_PROJECT_VERSION in the
+    # pbxproj (this project has one version number, not one per platform), so
+    # take whichever platform's TestFlight history is further ahead — never
+    # move the shared counter backwards for either one.
+    uploaded_osx = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      platform: "osx",
+      initial_build_number: INITIAL_BUILD_NUMBER,
+    )
+    uploaded_ios = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      initial_build_number: INITIAL_BUILD_NUMBER,
+    )
+    local = get_build_number(xcodeproj: PROJECT).to_i
+    next_build = [uploaded_osx, uploaded_ios, local].max + 1
+
+    UI.message("TestFlight has #{uploaded_osx} (osx) / #{uploaded_ios} (ios), project has #{local} — building #{next_build}.")
+    increment_build_number(xcodeproj: PROJECT, build_number: next_build)
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      catalyst_platform: "macos",
+      installer_cert_name: installer_cert,
+      export_method: "app-store",
+      output_directory: "build/fastlane",
+      output_name: "CryptoWarden.pkg",
+      clean: options[:clean].to_s == "true",
+      xcargs: "-allowProvisioningUpdates",
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      app_platform: "osx",
+      pkg: lane_context[SharedValues::PKG_OUTPUT_PATH],
+      skip_waiting_for_build_processing: true,
+    )
+
+    UI.success("Uploaded macOS build #{next_build} — it will appear in TestFlight once Apple finishes processing.")
+  end
+end

@@ -74,3 +74,10 @@ buck-out/
 # Sensitive config files that must not be committed
 /android/app/google-services.json
 /src/config/GoogleSignIn.json
+# fastlane
+fastlane/.env
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+build/fastlane/
+*.mobileprovision
